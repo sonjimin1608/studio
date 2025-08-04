@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface WordBankContextType {
   wordBank: WordBankItem[];
-  addWord: (item: Omit<WordBankItem, 'id'>) => void;
+  addWord: (item: { term: string; definition: string; type: 'vocabulary' | 'grammar' }) => void;
   removeWord: (id: string) => void;
   removeWordByTerm: (term: string) => void;
   isWordSaved: (term: string) => boolean;
@@ -43,7 +43,7 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [wordBank, isLoaded]);
 
-  const addWord = (item: Omit<WordBankItem, 'id'>) => {
+  const addWord = (item: { term: string; definition: string; type: 'vocabulary' | 'grammar' }) => {
     if (wordBank.some(i => i.term === item.term)) {
       toast({
         title: "이미 추가된 항목입니다.",
@@ -52,11 +52,11 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
       });
       return;
     }
-    const newItem = { ...item, id: new Date().toISOString() };
+    const newItem: WordBankItem = { ...item, id: new Date().toISOString() };
     setWordBank(prev => [newItem, ...prev]);
     toast({
       title: "단어장에 추가됨",
-      description: `"${item.term}"을(를) 단어장에 추가했습니다.`,
+      description: `"${newItem.term}"을(를) 단어장에 추가했습니다.`,
     });
   };
 

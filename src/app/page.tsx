@@ -263,7 +263,7 @@ export default function HomePage() {
                                   size="icon"
                                   variant="ghost"
                                   className="h-8 w-8 flex-shrink-0 ml-2"
-                                  onClick={() => saved ? removeWordByTerm(item.term) : addWord({...item, type: 'grammar'})}
+                                  onClick={() => saved ? removeWordByTerm(item.term) : addWord({term: item.term, definition: item.definition, type: 'grammar'})}
                                 >
                                   {saved ? <Trash2 className="h-4 w-4 text-destructive" /> : <Plus className="h-4 w-4" />}
                                 </Button>
@@ -287,7 +287,7 @@ export default function HomePage() {
                                   size="icon"
                                   variant="ghost"
                                   className="h-8 w-8 flex-shrink-0 ml-2"
-                                  onClick={() => saved ? removeWordByTerm(item.term) : addWord({...item, type: 'vocabulary'})}
+                                  onClick={() => saved ? removeWordByTerm(item.term) : addWord({term: item.term, definition: item.definition, type: 'vocabulary'})}
                                 >
                                   {saved ? <Trash2 className="h-4 w-4 text-destructive" /> : <Plus className="h-4 w-4" />}
                                 </Button>
