@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { analyzeSentenceAction, generateStoryParagraphAction } from './actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { useWordBank } from '@/context/WordBankContext';
 import type { AnalyzeSentenceOutput } from '@/ai/flows/analyze-sentence';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 const STORY_STORAGE_KEY = 'cuento-diario-story';
 const CURRENT_DAY_STORAGE_KEY = 'cuento-diario-current-day';
@@ -26,7 +27,7 @@ export default function HomePage() {
   const [analysisResult, setAnalysisResult] = useState<AnalyzeSentenceOutput | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
-  const { addWord, removeWordByTerm, isWordSaved } = useWordBank();
+  const { addWord, removeWordByTerm, isWordSaved, wordBank } = useWordBank();
   const [storyTopic, setStoryTopic] = useState('');
   const [isNewStory, setIsNewStory] = useState(true);
 
@@ -128,6 +129,18 @@ export default function HomePage() {
     }
   };
   
+  const wordBankTerms = useMemo(() => new Set(wordBank.map(item => item.term.toLowerCase())), [wordBank]);
+
+  const highlightWords = (text: string) => {
+    const wordsAndPunctuation = text.split(/(\b\w+\b|[.,?!;])/);
+    return wordsAndPunctuation.map((part, index) => {
+      if (wordBankTerms.has(part.toLowerCase())) {
+        return <span key={index} className="bg-yellow-200/50 dark:bg-yellow-700/50 rounded-md">{part}</span>;
+      }
+      return part;
+    });
+  };
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
@@ -187,7 +200,7 @@ export default function HomePage() {
                     onClick={() => handleSentenceClick(sentence)}
                     className="cursor-pointer hover:bg-accent/50 p-1 rounded-md transition-colors"
                   >
-                    {sentence}{' '}
+                    {highlightWords(sentence)}{' '}
                   </span>
                 </SheetTrigger>
               ))}
@@ -209,6 +222,10 @@ export default function HomePage() {
                   </div>
                 ) : analysisResult ? (
                   <div className="space-y-6">
+                     <div>
+                      <h3 className="font-semibold mb-2 text-lg font-headline">번역</h3>
+                       <p className="p-3 bg-secondary/50 rounded-md text-sm">{analysisResult.translation}</p>
+                    </div>
                     <div>
                       <h3 className="font-semibold mb-2 text-lg font-headline">주요 문법</h3>
                       <ul className="space-y-2">
