@@ -17,7 +17,7 @@ const AnalyzeSentenceInputSchema = z.object({
 export type AnalyzeSentenceInput = z.infer<typeof AnalyzeSentenceInputSchema>;
 
 const AnalyzeSentenceOutputSchema = z.object({
-  translation: z.string().describe('The Korean translation of the sentence.'),
+  translation: z.string().describe('The Korean and English translation of the sentence, formatted as "Korean (English)".'),
   grammar: z
     .array(
       z.object({
@@ -51,7 +51,7 @@ const prompt = ai.definePrompt({
 
 Sentence: {{{sentence}}}
 
-1.  **Translation**: Translate the sentence into Korean.
+1.  **Translation**: Translate the sentence into Korean and English. The output format must be "한국어 번역 (English Translation)".
 2.  **Grammar**: Identify key grammatical structures or rules used in the sentence (e.g., Subjunctive mood, Interrogative sentence, Conditional tense). Do not just list parts of speech. For each rule, provide the name of the rule ('term') and a brief explanation ('definition'), **both in Korean only**.
 3.  **Vocabulary**: Identify **all nouns, verbs, adjectives, and adverbs** from the sentence, excluding proper nouns. For each word:
     *   **term**: Provide the original Spanish word.
