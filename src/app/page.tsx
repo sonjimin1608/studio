@@ -172,7 +172,7 @@ export default function HomePage() {
   if (isNewStory) {
     return (
       <div className="flex flex-col items-center justify-center text-center h-[calc(100vh-200px)]">
-        <h1 className="text-4xl font-headline mb-4">Cuento Diario에 오신 것을 환영합니다!</h1>
+        <h1 className="text-4xl font-headline mb-4">Ñovel에 오신 것을 환영합니다!</h1>
         <p className="text-muted-foreground mb-8 max-w-md">매일 새로운 스페인어 이야기로 즐겁게 학습해보세요. 시작하려면 이야기의 주제를 정해주세요.</p>
         <div className="w-full max-w-sm space-y-4">
            <div className="grid w-full items-center gap-1.5">
