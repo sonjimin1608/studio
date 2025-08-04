@@ -1,80 +1,67 @@
 'use server';
 
 /**
- * @fileOverview Generates a unique Spanish-language short story of approximately 1000 sentences,
- * and automatically splits it into 100 daily lessons.
+ * @fileOverview Generates a paragraph for a Spanish story based on a given topic and previous context.
  *
- * - generateSpanishStory - A function that handles the story generation and splitting process.
- * - GenerateSpanishStoryInput - The input type for the generateSpanishStory function.
- * - GenerateSpanishStoryOutput - The return type for the generateSpanishStory function.
+ * - generateSpanishStoryParagraph - A function that handles the paragraph generation process.
+ * - GenerateSpanishStoryParagraphInput - The input type for the generateSpanishStoryParagraph function.
+ * - GenerateSpanishStoryParagraphOutput - The return type for the generateSpanishStoryParagraph function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const GenerateSpanishStoryInputSchema = z.object({
-  numberOfSentences: z
-    .number()
-    .default(1000)
-    .describe('The approximate number of sentences in the story.'),
-  numberOfDays: z
-    .number()
-    .default(100)
-    .describe('The number of daily lessons to split the story into.'),
+const GenerateSpanishStoryParagraphInputSchema = z.object({
+  topic: z.string().describe('The overall topic or theme of the story.'),
+  previousContext: z
+    .string()
+    .optional()
+    .describe('The preceding paragraphs of the story to maintain context.'),
 });
-export type GenerateSpanishStoryInput = z.infer<typeof GenerateSpanishStoryInputSchema>;
+export type GenerateSpanishStoryParagraphInput = z.infer<typeof GenerateSpanishStoryParagraphInputSchema>;
 
-const GenerateSpanishStoryOutputSchema = z.object({
-  dailyLessons: z
-    .array(z.string())
-    .describe('An array of strings, where each string is a daily lesson.'),
-  progress: z.string().describe('Short progress summary'),
+const GenerateSpanishStoryParagraphOutputSchema = z.object({
+  paragraph: z.string().describe('A new paragraph for the Spanish story.'),
 });
-export type GenerateSpanishStoryOutput = z.infer<typeof GenerateSpanishStoryOutputSchema>;
+export type GenerateSpanishStoryParagraphOutput = z.infer<typeof GenerateSpanishStoryParagraphOutputSchema>;
 
-export async function generateSpanishStory(input: GenerateSpanishStoryInput): Promise<GenerateSpanishStoryOutput> {
-  return generateSpanishStoryFlow(input);
+export async function generateSpanishStoryParagraph(input: GenerateSpanishStoryParagraphInput): Promise<GenerateSpanishStoryParagraphOutput> {
+  return generateSpanishStoryParagraphFlow(input);
 }
 
 const storyPrompt = ai.definePrompt({
-  name: 'storyPrompt',
-  input: {schema: GenerateSpanishStoryInputSchema},
-  output: {schema: z.string().describe('A Spanish-language short story.')},
-  prompt: `You are a creative writer who specializes in writing short stories in Spanish.
+  name: 'storyParagraphPrompt',
+  input: {schema: GenerateSpanishStoryParagraphInputSchema},
+  output: {schema: GenerateSpanishStoryParagraphOutputSchema},
+  prompt: `You are a creative writer who specializes in writing short stories in Spanish for language learners.
 
-  Please write a unique Spanish-language short story of approximately {{numberOfSentences}} sentences.
-  The story should be engaging and suitable for Spanish language learners.
-  Focus on using a variety of vocabulary and grammatical structures appropriate for learners.
-  Do not split the story into multiple sections. Just output the entire story.`,
+  The overall topic of the story is: {{topic}}
+
+  {{#if previousContext}}
+  Here is the story so far:
+  ---
+  {{{previousContext}}}
+  ---
+  Please continue the story with a new, interesting paragraph of about 5-7 sentences. Ensure it flows logically from the previous context.
+  {{else}}
+  Please start a new, interesting story on the given topic. Write the first paragraph, about 5-7 sentences long.
+  {{/if}}
+  
+  The paragraph should be engaging and use a variety of vocabulary and grammatical structures suitable for learners.
+  Output only the new paragraph.`,
 });
 
-const generateSpanishStoryFlow = ai.defineFlow(
+const generateSpanishStoryParagraphFlow = ai.defineFlow(
   {
-    name: 'generateSpanishStoryFlow',
-    inputSchema: GenerateSpanishStoryInputSchema,
-    outputSchema: GenerateSpanishStoryOutputSchema,
+    name: 'generateSpanishStoryParagraphFlow',
+    inputSchema: GenerateSpanishStoryParagraphInputSchema,
+    outputSchema: GenerateSpanishStoryParagraphOutputSchema,
   },
   async input => {
-    const {output: story} = await storyPrompt(input);
-
-    if (!story) {
-      throw new Error('Failed to generate the story.');
+    const {output} = await storyPrompt(input);
+    if (!output) {
+      throw new Error('Failed to generate the story paragraph.');
     }
-
-    const sentences = story.split(/[.?!]/).filter(s => s.trim() !== '');
-    const sentencesPerDay = Math.ceil(sentences.length / input.numberOfDays);
-
-    const dailyLessons: string[] = [];
-    for (let i = 0; i < input.numberOfDays; i++) {
-      const start = i * sentencesPerDay;
-      const end = Math.min(start + sentencesPerDay, sentences.length);
-      const lessonSentences = sentences.slice(start, end);
-      dailyLessons.push(lessonSentences.join('. ') + '.');
-    }
-
-    return {
-      dailyLessons: dailyLessons,
-      progress: 'Successfully generated a Spanish story and split it into daily lessons.',
-    };
+    return output;
   }
 );

@@ -1,12 +1,12 @@
 'use server';
-import { generateSpanishStory } from '@/ai/flows/generate-spanish-story';
+import { generateSpanishStoryParagraph } from '@/ai/flows/generate-spanish-story';
 import { analyzeSentence } from '@/ai/flows/analyze-sentence';
-import type { GenerateSpanishStoryOutput } from '@/ai/flows/generate-spanish-story';
+import type { GenerateSpanishStoryParagraphInput, GenerateSpanishStoryParagraphOutput } from '@/ai/flows/generate-spanish-story';
 import type { AnalyzeSentenceOutput } from '@/ai/flows/analyze-sentence';
 
 type GenerateStoryResult = {
   success: true;
-  data: GenerateSpanishStoryOutput['dailyLessons'];
+  data: GenerateSpanishStoryParagraphOutput['paragraph'];
 } | {
   success: false;
   error: string;
@@ -20,16 +20,13 @@ type AnalyzeSentenceResult = {
   error: string;
 }
 
-export async function generateStoryAction(): Promise<GenerateStoryResult> {
+export async function generateStoryParagraphAction(input: GenerateSpanishStoryParagraphInput): Promise<GenerateStoryResult> {
   try {
-    const story = await generateSpanishStory({
-      numberOfSentences: 1000,
-      numberOfDays: 100,
-    });
-    return { success: true, data: story.dailyLessons };
+    const result = await generateSpanishStoryParagraph(input);
+    return { success: true, data: result.paragraph };
   } catch (error) {
-    console.error('Error generating story:', error);
-    return { success: false, error: '이야기 생성에 실패했습니다. 다시 시도해주세요.' };
+    console.error('Error generating story paragraph:', error);
+    return { success: false, error: '이야기 단락 생성에 실패했습니다. 다시 시도해주세요.' };
   }
 }
 
