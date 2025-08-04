@@ -18,11 +18,23 @@ export type AnalyzeSentenceInput = z.infer<typeof AnalyzeSentenceInputSchema>;
 
 const AnalyzeSentenceOutputSchema = z.object({
   grammar: z
-    .array(z.string())
-    .describe('List of grammatical elements found in the sentence.'),
+    .array(
+      z.object({
+        term: z.string().describe('The name of the grammatical rule.'),
+        definition: z.string().describe('The explanation of the grammatical rule.'),
+      })
+    )
+    .describe('List of grammatical rules found in the sentence.'),
   vocabulary: z
-    .array(z.string())
-    .describe('List of vocabulary words with their definitions.'),
+    .array(
+      z.object({
+        term: z.string().describe('The vocabulary word in Spanish.'),
+        definition: z
+          .string()
+          .describe('The definition of the word in Korean and English, formatted as "Korean (English)".'),
+      })
+    )
+    .describe('List of vocabulary words with their definitions in Korean and English.'),
 });
 export type AnalyzeSentenceOutput = z.infer<typeof AnalyzeSentenceOutputSchema>;
 
@@ -34,7 +46,14 @@ const prompt = ai.definePrompt({
   name: 'analyzeSentencePrompt',
   input: {schema: AnalyzeSentenceInputSchema},
   output: {schema: AnalyzeSentenceOutputSchema},
-  prompt: `You are a Spanish language expert. Analyze the following sentence and identify the grammatical elements and vocabulary words. Provide definitions for each vocabulary word.\n\nSentence: {{{sentence}}}`,
+  prompt: `You are a Spanish language expert. Analyze the following Spanish sentence.
+
+Sentence: {{{sentence}}}
+
+1.  **Grammar**: Identify key grammatical structures or rules used in the sentence (e.g., Subjunctive mood, Interrogative sentence, Conditional tense). Do not just list parts of speech. For each rule, provide the name of the rule ('term') and a brief explanation ('definition') in Korean.
+2.  **Vocabulary**: Identify important vocabulary words. For each word, provide the original Spanish word ('term') and its definition ('definition') in both Korean and English. The definition format must be "한국어 뜻 (English meaning)".
+
+Your output must be a JSON object matching the provided schema.`,
 });
 
 const analyzeSentenceFlow = ai.defineFlow(

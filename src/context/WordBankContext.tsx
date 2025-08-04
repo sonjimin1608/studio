@@ -8,6 +8,7 @@ interface WordBankContextType {
   wordBank: WordBankItem[];
   addWord: (item: Omit<WordBankItem, 'id'>) => void;
   removeWord: (id: string) => void;
+  removeWordByTerm: (term: string) => void;
   isWordSaved: (term: string) => boolean;
 }
 
@@ -70,13 +71,25 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
       });
     }
   };
+  
+  const removeWordByTerm = (term: string) => {
+    const itemToRemove = wordBank.find(item => item.term === term);
+    setWordBank(prev => prev.filter(item => item.term !== term));
+    if (itemToRemove) {
+        toast({
+            title: "단어장에서 삭제됨",
+            description: `"${itemToRemove.term}"을(를) 단어장에서 삭제했습니다.`,
+            variant: "destructive",
+        });
+    }
+  };
 
   const isWordSaved = (term: string) => {
     return wordBank.some(item => item.term === term);
   }
 
   return (
-    <WordBankContext.Provider value={{ wordBank, addWord, removeWord, isWordSaved }}>
+    <WordBankContext.Provider value={{ wordBank, addWord, removeWord, removeWordByTerm, isWordSaved }}>
       {children}
     </WordBankContext.Provider>
   );

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronLeft, ChevronRight, Loader2, Plus, Check, Wand2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Plus, Wand2, Trash2 } from 'lucide-react';
 import { useWordBank } from '@/context/WordBankContext';
 import type { AnalyzeSentenceOutput } from '@/ai/flows/analyze-sentence';
 import { Input } from '@/components/ui/input';
@@ -26,7 +26,7 @@ export default function HomePage() {
   const [analysisResult, setAnalysisResult] = useState<AnalyzeSentenceOutput | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
-  const { addWord, isWordSaved } = useWordBank();
+  const { addWord, removeWordByTerm, isWordSaved } = useWordBank();
   const [storyTopic, setStoryTopic] = useState('');
   const [isNewStory, setIsNewStory] = useState(true);
 
@@ -213,16 +213,20 @@ export default function HomePage() {
                       <h3 className="font-semibold mb-2 text-lg font-headline">주요 문법</h3>
                       <ul className="space-y-2">
                         {analysisResult.grammar.map((item, index) => {
-                          const [term, ...definitionParts] = item.split(':');
-                          const definition = definitionParts.join(':').trim();
+                          const saved = isWordSaved(item.term);
                           return (
                             <li key={index} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
                               <div>
-                                <p className="font-semibold">{term}</p>
-                                <p className="text-sm text-muted-foreground">{definition}</p>
+                                <p className="font-semibold">{item.term}</p>
+                                <p className="text-sm text-muted-foreground">{item.definition}</p>
                               </div>
-                              <Button size="icon" variant="ghost" className="h-8 w-8 flex-shrink-0 ml-2" onClick={() => addWord({term, definition, type: 'grammar'})} disabled={isWordSaved(term)}>
-                                {isWordSaved(term) ? <Check className="h-4 w-4 text-primary" /> : <Plus className="h-4 w-4" />}
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 flex-shrink-0 ml-2"
+                                onClick={() => saved ? removeWordByTerm(item.term) : addWord({...item, type: 'grammar'})}
+                              >
+                                {saved ? <Trash2 className="h-4 w-4 text-destructive" /> : <Plus className="h-4 w-4" />}
                               </Button>
                             </li>
                           );
@@ -233,16 +237,20 @@ export default function HomePage() {
                       <h3 className="font-semibold mb-2 text-lg font-headline">어휘</h3>
                       <ul className="space-y-2">
                         {analysisResult.vocabulary.map((item, index) => {
-                           const [term, ...definitionParts] = item.split(':');
-                           const definition = definitionParts.join(':').trim();
+                          const saved = isWordSaved(item.term);
                           return (
                             <li key={index} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
                               <div>
-                                <p className="font-semibold">{term}</p>
-                                <p className="text-sm text-muted-foreground">{definition}</p>
+                                <p className="font-semibold">{item.term}</p>
+                                <p className="text-sm text-muted-foreground">{item.definition}</p>
                               </div>
-                              <Button size="icon" variant="ghost" className="h-8 w-8 flex-shrink-0 ml-2" onClick={() => addWord({term, definition, type: 'vocabulary'})} disabled={isWordSaved(term)}>
-                                {isWordSaved(term) ? <Check className="h-4 w-4 text-primary" /> : <Plus className="h-4 w-4" />}
+                               <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 flex-shrink-0 ml-2"
+                                onClick={() => saved ? removeWordByTerm(item.term) : addWord({...item, type: 'vocabulary'})}
+                              >
+                                {saved ? <Trash2 className="h-4 w-4 text-destructive" /> : <Plus className="h-4 w-4" />}
                               </Button>
                             </li>
                           );
