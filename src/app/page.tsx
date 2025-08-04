@@ -19,6 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { WordBankItem } from '@/lib/types';
 
 const STORY_STORAGE_KEY = 'cuento-diario-story';
 const CURRENT_DAY_STORAGE_KEY = 'cuento-diario-current-day';
@@ -136,17 +137,9 @@ export default function HomePage() {
   };
   
   const wordBankMap = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, WordBankItem>();
     wordBank.forEach(item => {
-        // Handle cases like "bueno/a" -> "bueno" and "buena"
-        const baseTerm = item.term.split(' ')[0].split('/')[0];
-        const variations = item.term.split(' ')[0].split('/');
-        
-        map.set(item.term.toLowerCase(), item.definition);
-        if (variations.length > 1) {
-            map.set(variations[0].toLowerCase(), item.definition);
-            map.set((baseTerm.slice(0, -1) + variations[1]).toLowerCase(), item.definition);
-        }
+      map.set(item.term.toLowerCase().split(' ')[0], item);
     });
     return map;
   }, [wordBank]);
@@ -156,14 +149,14 @@ export default function HomePage() {
     return wordsAndPunctuation.map((part, index) => {
       const lowerPart = part.toLowerCase();
       if (wordBankMap.has(lowerPart)) {
-        const definition = wordBankMap.get(lowerPart);
+        const item = wordBankMap.get(lowerPart)!;
         return (
           <Tooltip key={index}>
             <TooltipTrigger asChild>
               <span className="bg-red-300/50 dark:bg-red-800/50 rounded-md cursor-help">{part}</span>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{definition}</p>
+              {item.definition}
             </TooltipContent>
           </Tooltip>
         );
@@ -225,7 +218,7 @@ export default function HomePage() {
         <CardContent className="text-lg leading-relaxed space-y-4">
           <TooltipProvider>
             <Sheet open={!!selectedSentence} onOpenChange={(isOpen) => !isOpen && setSelectedSentence(null)}>
-              <p>
+              <div>
                 {sentences.map((sentence, index) => (
                   <SheetTrigger asChild key={index}>
                     <span
@@ -236,7 +229,7 @@ export default function HomePage() {
                     </span>
                   </SheetTrigger>
                 ))}
-              </p>
+              </div>
               <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
                 <SheetHeader>
                   <SheetTitle className="font-headline">문장 분석</SheetTitle>
@@ -273,7 +266,7 @@ export default function HomePage() {
                                   size="icon"
                                   variant="ghost"
                                   className="h-8 w-8 flex-shrink-0 ml-2"
-                                  onClick={() => saved ? removeWordByTerm(item.term) : addWord({term: item.term, definition: item.definition, type: 'grammar'})}
+                                  onClick={() => saved ? removeWordByTerm(item.term) : addWord({id: '', term: item.term, definition: item.definition, type: 'grammar'})}
                                 >
                                   {saved ? <Trash2 className="h-4 w-4 text-destructive" /> : <Plus className="h-4 w-4" />}
                                 </Button>
@@ -297,7 +290,7 @@ export default function HomePage() {
                                   size="icon"
                                   variant="ghost"
                                   className="h-8 w-8 flex-shrink-0 ml-2"
-                                  onClick={() => saved ? removeWordByTerm(item.term) : addWord({term: item.term, definition: item.definition, type: 'vocabulary'})}
+                                  onClick={() => saved ? removeWordByTerm(item.term) : addWord({id: '', term: item.term, definition: item.definition, type: 'vocabulary'})}
                                 >
                                   {saved ? <Trash2 className="h-4 w-4 text-destructive" /> : <Plus className="h-4 w-4" />}
                                 </Button>
