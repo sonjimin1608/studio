@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronLeft, ChevronRight, Loader2, Plus, Wand2, Trash2 } from 'lucide-react';
 import { useWordBank } from '@/context/WordBankContext';
-import type { AnalyzeSentenceOutput } from '@/ai/flows/analyze-sentence';
+import type { AnalyzeSentenceOutput, AnalyzeSentenceInput } from '@/ai/flows/analyze-sentence';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -33,7 +33,7 @@ export default function HomePage() {
   const [analysisResult, setAnalysisResult] = useState<AnalyzeSentenceOutput | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
-  const { addWord, removeWordByTerm, isWordSaved, wordBank } = useWordBank();
+  const { addWord, removeWord, removeWordByTerm, isWordSaved, wordBank } = useWordBank();
   const [storyTopic, setStoryTopic] = useState('');
   const [isNewStory, setIsNewStory] = useState(true);
 
@@ -137,12 +137,22 @@ export default function HomePage() {
   
   const wordBankMap = useMemo(() => {
     const map = new Map<string, string>();
-    wordBank.forEach(item => map.set(item.term.toLowerCase(), item.definition));
+    wordBank.forEach(item => {
+        // Handle cases like "bueno/a" -> "bueno" and "buena"
+        const baseTerm = item.term.split(' ')[0].split('/')[0];
+        const variations = item.term.split(' ')[0].split('/');
+        
+        map.set(item.term.toLowerCase(), item.definition);
+        if (variations.length > 1) {
+            map.set(variations[0].toLowerCase(), item.definition);
+            map.set((baseTerm.slice(0, -1) + variations[1]).toLowerCase(), item.definition);
+        }
+    });
     return map;
   }, [wordBank]);
 
   const highlightWords = (text: string) => {
-    const wordsAndPunctuation = text.split(/(\b\w+\b|[.,?!;])/);
+    const wordsAndPunctuation = text.split(/(\b[\w\u00C0-\u017F']+\b|[.,?!;])/);
     return wordsAndPunctuation.map((part, index) => {
       const lowerPart = part.toLowerCase();
       if (wordBankMap.has(lowerPart)) {
