@@ -25,7 +25,7 @@ export default function Header() {
               <path d="M48,216a23.9,23.9,0,0,1,24-24H208V32H72a24,24,0,0,0-24,24V216" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"></path>
               <polyline points="208 64 72 64 72 40" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"></polyline>
             </svg>
-            <span className="font-bold font-headline text-lg">Cuento Diario</span>
+            <span className="font-bold font-headline text-lg">Ñovel</span>
           </Link>
         </div>
         <nav className="flex items-center space-x-2 sm:space-x-6 text-sm font-medium">

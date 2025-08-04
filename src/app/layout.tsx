@@ -5,7 +5,7 @@ import Providers from '@/components/Providers';
 import Header from '@/components/Header';
 
 export const metadata: Metadata = {
-  title: 'Cuento Diario',
+  title: 'Ñovel',
   description: '매일 한 편의 스페인어 소설을 읽으며 배우는 언어 학습 앱',
 };
 

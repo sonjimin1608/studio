@@ -35,7 +35,7 @@ const AnalyzeSentenceOutputSchema = z.object({
           .describe('The definition of the word in Korean and English, formatted as "Korean (English)".'),
       })
     )
-    .describe('List of all nouns, verbs, adjectives, and adverbs with their definitions in Korean and English. Do not include proper nouns.'),
+    .describe('List of all nouns, verbs, adjectives, adverbs, and prepositions with their definitions in Korean and English. Do not include proper nouns.'),
 });
 export type AnalyzeSentenceOutput = z.infer<typeof AnalyzeSentenceOutputSchema>;
 
@@ -53,7 +53,7 @@ Sentence: {{{sentence}}}
 
 1.  **Translation**: Translate the sentence into Korean and English. The output format must be "한국어 번역 (English Translation)".
 2.  **Grammar**: Identify key grammatical structures or rules used in the sentence (e.g., Subjunctive mood, Interrogative sentence, Conditional tense). Do not just list parts of speech. For each rule, provide the name of the rule ('term') and a brief explanation ('definition'), **both in Korean only**.
-3.  **Vocabulary**: Identify **all nouns, verbs, adjectives, and adverbs** from the sentence, excluding proper nouns. For each word:
+3.  **Vocabulary**: Identify **all nouns, verbs, adjectives, adverbs, and prepositions** from the sentence, excluding proper nouns. For each word:
     *   **term**: Provide the original Spanish word.
         *   For **nouns**, indicate their gender: (m.) for masculine, (f.) for feminine. Example: "amigo (m.)", "casa (f.)".
         *   For **adjectives** with gender, show both forms using a slash. Example: "bonito/a".
