@@ -13,6 +13,12 @@ import type { AnalyzeSentenceOutput } from '@/ai/flows/analyze-sentence';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const STORY_STORAGE_KEY = 'cuento-diario-story';
 const CURRENT_DAY_STORAGE_KEY = 'cuento-diario-current-day';
@@ -129,13 +135,28 @@ export default function HomePage() {
     }
   };
   
-  const wordBankTerms = useMemo(() => new Set(wordBank.map(item => item.term.toLowerCase())), [wordBank]);
+  const wordBankMap = useMemo(() => {
+    const map = new Map<string, string>();
+    wordBank.forEach(item => map.set(item.term.toLowerCase(), item.definition));
+    return map;
+  }, [wordBank]);
 
   const highlightWords = (text: string) => {
     const wordsAndPunctuation = text.split(/(\b\w+\b|[.,?!;])/);
     return wordsAndPunctuation.map((part, index) => {
-      if (wordBankTerms.has(part.toLowerCase())) {
-        return <span key={index} className="bg-yellow-200/50 dark:bg-yellow-700/50 rounded-md">{part}</span>;
+      const lowerPart = part.toLowerCase();
+      if (wordBankMap.has(lowerPart)) {
+        const definition = wordBankMap.get(lowerPart);
+        return (
+          <Tooltip key={index}>
+            <TooltipTrigger asChild>
+              <span className="bg-red-300/50 dark:bg-red-800/50 rounded-md cursor-help">{part}</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{definition}</p>
+            </TooltipContent>
+          </Tooltip>
+        );
       }
       return part;
     });
@@ -192,93 +213,95 @@ export default function HomePage() {
           <CardDescription>문장을 클릭하여 문법과 단어 분석을 확인하세요.</CardDescription>
         </CardHeader>
         <CardContent className="text-lg leading-relaxed space-y-4">
-          <Sheet open={!!selectedSentence} onOpenChange={(isOpen) => !isOpen && setSelectedSentence(null)}>
-            <p>
-              {sentences.map((sentence, index) => (
-                <SheetTrigger asChild key={index}>
-                  <span
-                    onClick={() => handleSentenceClick(sentence)}
-                    className="cursor-pointer hover:bg-accent/50 p-1 rounded-md transition-colors"
-                  >
-                    {highlightWords(sentence)}{' '}
-                  </span>
-                </SheetTrigger>
-              ))}
-            </p>
-            <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle className="font-headline">문장 분석</SheetTitle>
-                <SheetDescription asChild>
-                  <p className="mt-2 p-3 bg-muted rounded-md text-sm">{selectedSentence}</p>
-                </SheetDescription>
-              </SheetHeader>
-              <div className="py-4">
-                {isAnalyzing ? (
-                  <div className="space-y-4">
-                    <Skeleton className="h-8 w-1/3" />
-                    <Skeleton className="h-16 w-full" />
-                    <Skeleton className="h-8 w-1/3 mt-4" />
-                    <Skeleton className="h-16 w-full" />
-                  </div>
-                ) : analysisResult ? (
-                  <div className="space-y-6">
-                     <div>
-                      <h3 className="font-semibold mb-2 text-lg font-headline">번역</h3>
-                       <p className="p-3 bg-secondary/50 rounded-md text-sm">{analysisResult.translation}</p>
+          <TooltipProvider>
+            <Sheet open={!!selectedSentence} onOpenChange={(isOpen) => !isOpen && setSelectedSentence(null)}>
+              <p>
+                {sentences.map((sentence, index) => (
+                  <SheetTrigger asChild key={index}>
+                    <span
+                      onClick={() => handleSentenceClick(sentence)}
+                      className="cursor-pointer hover:bg-accent/50 p-1 rounded-md transition-colors"
+                    >
+                      {highlightWords(sentence)}{' '}
+                    </span>
+                  </SheetTrigger>
+                ))}
+              </p>
+              <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle className="font-headline">문장 분석</SheetTitle>
+                  <SheetDescription asChild>
+                    <p className="mt-2 p-3 bg-muted rounded-md text-sm">{selectedSentence}</p>
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="py-4">
+                  {isAnalyzing ? (
+                    <div className="space-y-4">
+                      <Skeleton className="h-8 w-1/3" />
+                      <Skeleton className="h-16 w-full" />
+                      <Skeleton className="h-8 w-1/3 mt-4" />
+                      <Skeleton className="h-16 w-full" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold mb-2 text-lg font-headline">주요 문법</h3>
-                      <ul className="space-y-2">
-                        {analysisResult.grammar.map((item, index) => {
-                          const saved = isWordSaved(item.term);
-                          return (
-                            <li key={index} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
-                              <div>
-                                <p className="font-semibold">{item.term}</p>
-                                <p className="text-sm text-muted-foreground">{item.definition}</p>
-                              </div>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8 flex-shrink-0 ml-2"
-                                onClick={() => saved ? removeWordByTerm(item.term) : addWord({...item, type: 'grammar'})}
-                              >
-                                {saved ? <Trash2 className="h-4 w-4 text-destructive" /> : <Plus className="h-4 w-4" />}
-                              </Button>
-                            </li>
-                          );
-                        })}
-                      </ul>
+                  ) : analysisResult ? (
+                    <div className="space-y-6">
+                       <div>
+                        <h3 className="font-semibold mb-2 text-lg font-headline">번역</h3>
+                         <p className="p-3 bg-secondary/50 rounded-md text-sm">{analysisResult.translation}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2 text-lg font-headline">주요 문법</h3>
+                        <ul className="space-y-2">
+                          {analysisResult.grammar.map((item, index) => {
+                            const saved = isWordSaved(item.term);
+                            return (
+                              <li key={index} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
+                                <div>
+                                  <p className="font-semibold">{item.term}</p>
+                                  <p className="text-sm text-muted-foreground">{item.definition}</p>
+                                </div>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 flex-shrink-0 ml-2"
+                                  onClick={() => saved ? removeWordByTerm(item.term) : addWord({...item, type: 'grammar'})}
+                                >
+                                  {saved ? <Trash2 className="h-4 w-4 text-destructive" /> : <Plus className="h-4 w-4" />}
+                                </Button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2 text-lg font-headline">어휘</h3>
+                        <ul className="space-y-2">
+                          {analysisResult.vocabulary.map((item, index) => {
+                            const saved = isWordSaved(item.term);
+                            return (
+                              <li key={index} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
+                                <div>
+                                  <p className="font-semibold">{item.term}</p>
+                                  <p className="text-sm text-muted-foreground">{item.definition}</p>
+                                </div>
+                                 <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 flex-shrink-0 ml-2"
+                                  onClick={() => saved ? removeWordByTerm(item.term) : addWord({...item, type: 'vocabulary'})}
+                                >
+                                  {saved ? <Trash2 className="h-4 w-4 text-destructive" /> : <Plus className="h-4 w-4" />}
+                                </Button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold mb-2 text-lg font-headline">어휘</h3>
-                      <ul className="space-y-2">
-                        {analysisResult.vocabulary.map((item, index) => {
-                          const saved = isWordSaved(item.term);
-                          return (
-                            <li key={index} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
-                              <div>
-                                <p className="font-semibold">{item.term}</p>
-                                <p className="text-sm text-muted-foreground">{item.definition}</p>
-                              </div>
-                               <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8 flex-shrink-0 ml-2"
-                                onClick={() => saved ? removeWordByTerm(item.term) : addWord({...item, type: 'vocabulary'})}
-                              >
-                                {saved ? <Trash2 className="h-4 w-4 text-destructive" /> : <Plus className="h-4 w-4" />}
-                              </Button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </SheetContent>
-          </Sheet>
+                  ) : null}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </TooltipProvider>
         </CardContent>
         <CardFooter>
           <p className="text-sm text-muted-foreground">{storyTopic}</p>
