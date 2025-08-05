@@ -29,7 +29,7 @@ export async function generateNewStoryAction(topic: string): Promise<GenerateSto
       throw new Error('Failed to generate the first paragraph.');
     }
     const newStory: Story = {
-      id: crypto.randomUUID(),
+      id: `${Date.now()}${Math.random().toString(36).substring(2, 9)}`,
       topic: topic,
       lessons: [result.paragraph],
       createdAt: new Date().toISOString(),
