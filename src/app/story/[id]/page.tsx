@@ -36,7 +36,6 @@ function StoryComponent({ storyId }: { storyId: string }) {
   const { addWord, removeWordByTerm, isWordSaved, wordBank } = useWordBank();
   
   useEffect(() => {
-    // This check is important to prevent errors during server-side rendering or in environments where localStorage is not available.
     if (typeof window !== 'undefined') {
       try {
         const savedStoriesRaw = localStorage.getItem(STORIES_STORAGE_KEY);
@@ -45,12 +44,11 @@ function StoryComponent({ storyId }: { storyId: string }) {
           const currentStory = savedStories.find(s => s.id === storyId);
           setStory(currentStory || null);
         } else {
-          // No stories found at all
           setStory(null);
         }
       } catch (error) {
         console.error("저장된 이야기를 불러오는 데 실패했습니다.", error);
-        setStory(null); // Set to null on error
+        setStory(null);
       } finally {
         setIsLoading(false);
       }
@@ -286,7 +284,7 @@ function StoryComponent({ storyId }: { storyId: string }) {
 
 export default function StoryPage({ params }: { params: { id: string } }) {
   return (
-    <WordBankProvider>
+    <WordBankProvider storyId={params.id}>
       <StoryComponent storyId={params.id} />
     </WordBankProvider>
   )
