@@ -35,8 +35,8 @@ export default function NewStoryPage() {
         const updatedStories = [newStory, ...savedStories];
         localStorage.setItem(STORIES_STORAGE_KEY, JSON.stringify(updatedStories));
         
-        toast({ title: "성공", description: "새로운 이야기가 시작되었습니다!" });
-        router.push(`/story/${newStory.id}`);
+        toast({ title: "성공", description: "새로운 이야기가 생성되었습니다!" });
+        router.push('/');
       } catch (e) {
          toast({ title: "저장 오류", description: "이야기 저장에 실패했습니다.", variant: 'destructive' });
       }
