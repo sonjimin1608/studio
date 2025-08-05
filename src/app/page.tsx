@@ -159,6 +159,7 @@ export default function StoryPage() {
   }, [wordBankMap]);
 
   const capitalizeFirstLetter = (string: string) => {
+    if (!string) return '';
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
@@ -205,7 +206,7 @@ export default function StoryPage() {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle className="font-headline text-3xl">{capitalizeFirstLetter(story.title)}</CardTitle>
-              <CardDescription className="mt-1">주제: {story.topic}</CardDescription>
+              <CardDescription className="mt-1">주제: {capitalizeFirstLetter(story.topic)}</CardDescription>
             </div>
             <Button variant="destructive" size="icon" onClick={handleDeleteStory}>
               <Trash2 className="h-4 w-4" />
