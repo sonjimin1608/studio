@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -172,9 +173,11 @@ export default function StoryPage() {
   
     return parts.map((part, index) => {
       const lowerPart = part.toLowerCase();
-      const item = wordBankMap.get(lowerPart);
+      // Check if any key in the map is a substring of the lowerPart (for handling word variations)
+      const matchedKey = Array.from(wordBankMap.keys()).find(key => lowerPart.startsWith(key));
+      const item = matchedKey ? wordBankMap.get(matchedKey) : undefined;
   
-      if (item) {
+      if (item && part.match(new RegExp(`^${item.lemma}`, 'i'))) {
         return (
           <Tooltip key={index}>
             <TooltipTrigger asChild>
@@ -237,7 +240,7 @@ export default function StoryPage() {
         <CardHeader className="flex flex-row justify-between items-start">
           <div>
             <CardTitle className="font-headline text-3xl mb-2">{capitalizeFirstLetter(story.title)}</CardTitle>
-            {story.title && <CardDescription className="text-lg font-semibold text-foreground">{capitalizeFirstLetter(story.topic)}</CardDescription>}
+            {!story.title && <CardDescription className="text-lg font-semibold text-foreground">{capitalizeFirstLetter(story.topic)}</CardDescription>}
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -264,7 +267,7 @@ export default function StoryPage() {
           <TooltipProvider>
             <Sheet open={!!selectedSentence} onOpenChange={(isOpen) => !isOpen && setSelectedSentence(null)}>
               <div>
-                <p className="mb-4">
+                <div className="mb-4">
                   {sentences.map((sentence, sIndex) => (
                     <SheetTrigger asChild key={sIndex}>
                       <span
@@ -275,7 +278,7 @@ export default function StoryPage() {
                       </span>
                     </SheetTrigger>
                   ))}
-                </p>
+                </div>
               </div>
               <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
                 <SheetHeader>
