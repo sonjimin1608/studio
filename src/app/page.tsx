@@ -4,18 +4,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { analyzeSentenceAction, generateNewStoryAction } from './actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2, Plus, Trash2, Wand2, ChevronRight, BookOpen, ChevronLeft } from 'lucide-react';
 import { useWordBank } from '@/context/WordBankContext';
 import type { AnalyzeSentenceOutput, VocabularyItem } from '@/ai/flows/analyze-sentence';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,7 +52,7 @@ export default function StoryPage() {
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
   
   const { toast } = useToast();
-  const { addWord, removeWord, isWordSaved, wordBank } = useWordBank();
+  const { addWord, removeWord, isWordSaved } = useWordBank();
 
   const [paragraphAnalyses, setParagraphAnalyses] = useState<Record<number, SentenceAnalysis[]>>({});
   
@@ -85,28 +79,51 @@ export default function StoryPage() {
     }
   }, [story]);
 
-  const analyzeAndCacheSentence = useCallback(async (sentence: string, paragraphIndex: number) => {
+  const analyzeAndCacheSentence = useCallback(async (sentence: string, paragraphIndex: number): Promise<SentenceAnalysis> => {
+    // Check cache first
+    const cachedAnalysis = paragraphAnalyses[paragraphIndex]?.find(p => p.sentence === sentence);
+    if (cachedAnalysis && (cachedAnalysis.analysis || cachedAnalysis.isLoading)) {
+      return cachedAnalysis;
+    }
+
+    const analysisState: SentenceAnalysis = { sentence, analysis: null, isLoading: true };
+    
+    // Set loading state
     setParagraphAnalyses(prev => {
         const para = prev[paragraphIndex] || [];
-        if (para.some(s => s.sentence === sentence && (s.analysis || s.isLoading))) {
-            return prev;
+        if (!para.some(s => s.sentence === sentence)) {
+             return { ...prev, [paragraphIndex]: [...para, analysisState] };
         }
-        const newPara = para.map(s => s.sentence === sentence ? { ...s, isLoading: true } : s);
-        if (!newPara.some(s => s.sentence === sentence)) {
-            newPara.push({ sentence, analysis: null, isLoading: true });
-        }
-        return { ...prev, [paragraphIndex]: newPara };
+        return prev;
     });
+    
+    setActiveAnalysis(analysisState);
+    setIsSheetOpen(true);
 
     const result = await analyzeSentenceAction(sentence);
+    
+    const finalAnalysis: SentenceAnalysis = { 
+        ...analysisState, 
+        analysis: result.success ? result.data : null, 
+        isLoading: false 
+    };
 
     setParagraphAnalyses(prev => {
         const para = prev[paragraphIndex] || [];
-        const newPara = para.map(s => s.sentence === sentence ? { ...s, analysis: result.success ? result.data : null, isLoading: false } : s);
+        const newPara = para.map(s => s.sentence === sentence ? finalAnalysis : s);
         return { ...prev, [paragraphIndex]: newPara };
     });
 
-  }, []);
+    setActiveAnalysis(finalAnalysis);
+    return finalAnalysis;
+  }, [paragraphAnalyses]);
+
+
+  const handleSentenceClick = async (sentence: string, paragraphIndex: number) => {
+    const analysis = await analyzeAndCacheSentence(sentence, paragraphIndex);
+    setActiveAnalysis(analysis);
+    setIsSheetOpen(true);
+  }
 
   const handleToggleWord = (word: VocabularyItem) => {
     const wordInBank = isWordSaved(word.term);
@@ -228,36 +245,19 @@ export default function StoryPage() {
           </AlertDialog>
         </CardHeader>
         <CardContent className="text-lg leading-relaxed space-y-4 min-h-[200px]">
-          <TooltipProvider>
+          
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <div className="mb-4">
-                {sentences.map((sentence, sIndex) => {
-                  const sentenceAnalysis = paragraphAnalyses[currentParagraphIndex]?.find(p => p.sentence === sentence);
-                  return (
-                    <Tooltip key={sIndex} delayDuration={100}>
-                      <TooltipTrigger asChild>
-                        <span 
-                          onMouseEnter={() => analyzeAndCacheSentence(sentence, currentParagraphIndex)}
-                          className="cursor-pointer"
-                          onClick={() => {
-                            if (sentenceAnalysis && sentenceAnalysis.analysis) {
-                                setActiveAnalysis(sentenceAnalysis);
-                                setIsSheetOpen(true);
-                            }
-                          }}
-                        >
-                          {sentence}
-                          {' '}
-                        </span>
-                      </TooltipTrigger>
-                      {sentenceAnalysis?.analysis?.translation && (
-                        <TooltipContent>
-                          <p>{sentenceAnalysis.analysis.translation}</p>
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  );
-                })}
+                {sentences.map((sentence, sIndex) => (
+                  <span 
+                    key={sIndex}
+                    className="cursor-pointer hover:bg-accent/30"
+                    onClick={() => handleSentenceClick(sentence, currentParagraphIndex)}
+                  >
+                    {sentence}
+                    {' '}
+                  </span>
+                ))}
               </div>
 
               <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
@@ -327,7 +327,7 @@ export default function StoryPage() {
                 </div>
               </SheetContent>
             </Sheet>
-          </TooltipProvider>
+          
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
            <div className="w-full">
