@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { WordBankItem, Story } from '@/lib/types';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 const STORIES_STORAGE_KEY = 'novela-stories';
 
@@ -35,18 +36,24 @@ function StoryComponent({ storyId }: { storyId: string }) {
   const { addWord, removeWordByTerm, isWordSaved, wordBank } = useWordBank();
   
   useEffect(() => {
-    try {
-      const savedStoriesRaw = localStorage.getItem(STORIES_STORAGE_KEY);
-      if (savedStoriesRaw) {
-        const savedStories: Story[] = JSON.parse(savedStoriesRaw);
-        const currentStory = savedStories.find(s => s.id === storyId);
-        setStory(currentStory || null);
+    // This check is important to prevent errors during server-side rendering or in environments where localStorage is not available.
+    if (typeof window !== 'undefined') {
+      try {
+        const savedStoriesRaw = localStorage.getItem(STORIES_STORAGE_KEY);
+        if (savedStoriesRaw) {
+          const savedStories: Story[] = JSON.parse(savedStoriesRaw);
+          const currentStory = savedStories.find(s => s.id === storyId);
+          setStory(currentStory || null);
+        } else {
+          // No stories found at all
+          setStory(null);
+        }
+      } catch (error) {
+        console.error("저장된 이야기를 불러오는 데 실패했습니다.", error);
+        setStory(null); // Set to null on error
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("저장된 이야기를 불러오는 데 실패했습니다.", error);
-      setStory(null);
-    } finally {
-      setIsLoading(false);
     }
   }, [storyId]);
 
@@ -152,7 +159,7 @@ function StoryComponent({ storyId }: { storyId: string }) {
             <h1 className="text-2xl font-bold">이야기를 찾을 수 없습니다.</h1>
             <p className="text-muted-foreground mt-2">삭제되었거나 잘못된 주소일 수 있습니다.</p>
             <Button asChild className="mt-4">
-                <a href="/">홈으로 돌아가기</a>
+                <Link href="/">홈으로 돌아가기</Link>
             </Button>
         </div>
     );
@@ -284,5 +291,3 @@ export default function StoryPage({ params }: { params: { id: string } }) {
     </WordBankProvider>
   )
 }
-
-    
