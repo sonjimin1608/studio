@@ -41,6 +41,8 @@ interface Story {
   paragraphs: string[];
 }
 
+type VocabularyWord = AnalyzeSentenceOutput['vocabulary'][0];
+
 export default function StoryPage() {
   const [story, setStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +54,7 @@ export default function StoryPage() {
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
   
   const { toast } = useToast();
-  const { addWord, removeWordByTerm, isWordSaved, wordBank, clearWordBank } = useWordBank();
+  const { addWord, removeWord, isWordSaved, wordBank, clearWordBank } = useWordBank();
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -124,33 +126,58 @@ export default function StoryPage() {
     localStorage.removeItem(STORY_STORAGE_KEY);
     toast({ title: "삭제됨", description: "이야기를 삭제했습니다." });
   }
+
+  const handleToggleWord = (word: VocabularyWord) => {
+    if (isWordSaved(word.lemma)) {
+      removeWord(word.lemma);
+    } else {
+      addWord({
+        term: word.term,
+        lemma: word.lemma,
+        definition: word.definition,
+        type: 'vocabulary'
+      });
+    }
+  }
+
+  const handleToggleGrammar = (grammarItem: AnalyzeSentenceOutput['grammar'][0]) => {
+     if (isWordSaved(grammarItem.term)) {
+      removeWord(grammarItem.term);
+    } else {
+      addWord({
+        term: grammarItem.term,
+        lemma: grammarItem.term, // Grammar uses term as lemma
+        definition: grammarItem.definition,
+        type: 'grammar'
+      });
+    }
+  }
   
-  const wordBankMap = useMemo(() => {
-    const map = new Map<string, WordBankItem>();
-    wordBank.forEach(item => {
-      map.set(item.term.toLowerCase().split(' ')[0], item);
-    });
-    return map;
+  const wordBankLemmas = useMemo(() => {
+    return new Set(wordBank.map(item => item.lemma));
   }, [wordBank]);
 
   const highlightWords = useCallback((text: string) => {
       const wordsAndPunctuation = text.split(/(\b[\w\u00C0-\u017F']+\b|[.,?!;])/);
       return wordsAndPunctuation.map((part, index) => {
           const lowerPart = part.toLowerCase();
-          if (wordBankMap.has(lowerPart)) {
-              const item = wordBankMap.get(lowerPart)!;
-              return (
-                  <Tooltip key={index}>
-                      <TooltipTrigger asChild>
-                          <span className="bg-red-300/50 dark:bg-red-800/50 rounded-md cursor-help">{part}</span>
-                      </TooltipTrigger>
-                      <TooltipContent>{item.definition}</TooltipContent>
-                  </Tooltip>
-              );
+          
+          if (wordBankLemmas.has(lowerPart)) {
+            const item = wordBank.find(i => i.lemma === lowerPart);
+             if (item) {
+                return (
+                    <Tooltip key={index}>
+                        <TooltipTrigger asChild>
+                            <span className="bg-red-300/50 dark:bg-red-800/50 rounded-md cursor-help">{part}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>{item.definition}</TooltipContent>
+                    </Tooltip>
+                );
+             }
           }
           return part;
       });
-  }, [wordBankMap]);
+  }, [wordBank, wordBankLemmas]);
 
   const capitalizeFirstLetter = (string: string) => {
     if (!string) return '';
@@ -276,7 +303,7 @@ export default function StoryPage() {
                                   size="icon"
                                   variant="ghost"
                                   className="h-8 w-8 flex-shrink-0 ml-2"
-                                  onClick={() => saved ? removeWordByTerm(item.term) : addWord({term: item.term, definition: item.definition, type: 'grammar'})}
+                                  onClick={() => handleToggleGrammar(item)}
                                 >
                                   {saved ? <Trash2 className="h-4 w-4 text-destructive" /> : <Plus className="h-4 w-4" />}
                                 </Button>
@@ -289,18 +316,18 @@ export default function StoryPage() {
                         <h3 className="font-semibold mb-2 text-lg font-headline">어휘</h3>
                         <ul className="space-y-2">
                           {analysisResult.vocabulary.map((item, index) => {
-                            const saved = isWordSaved(item.term);
+                            const saved = isWordSaved(item.lemma);
                             return (
                               <li key={index} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
                                 <div>
-                                  <p className="font-semibold">{item.term}</p>
+                                  <p className="font-semibold">{item.term} ({item.lemma})</p>
                                   <p className="text-sm text-muted-foreground">{item.definition}</p>
                                 </div>
                                  <Button
                                   size="icon"
                                   variant="ghost"
                                   className="h-8 w-8 flex-shrink-0 ml-2"
-                                  onClick={() => saved ? removeWordByTerm(item.term) : addWord({term: item.term, definition: item.definition, type: 'vocabulary'})}
+                                  onClick={() => handleToggleWord(item)}
                                 >
                                   {saved ? <Trash2 className="h-4 w-4 text-destructive" /> : <Plus className="h-4 w-4" />}
                                 </Button>

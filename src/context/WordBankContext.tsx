@@ -7,9 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 interface WordBankContextType {
   wordBank: WordBankItem[];
   addWord: (item: Omit<WordBankItem, 'id'>) => void;
-  removeWord: (term: string) => void;
-  removeWordByTerm: (term: string) => void;
-  isWordSaved: (term: string) => boolean;
+  removeWord: (lemma: string) => void;
+  isWordSaved: (lemma: string) => boolean;
   clearWordBank: () => void;
 }
 
@@ -42,25 +41,25 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
 
   const addWord = useCallback((item: Omit<WordBankItem, 'id'>) => {
     setWordBank(prev => {
-      if (prev.some(i => i.term === item.term)) {
+      if (prev.some(i => i.lemma === item.lemma)) {
         return prev;
       }
       toast({
         title: "단어장에 추가됨",
-        description: `"${item.term}"을(를) 단어장에 추가했습니다.`,
+        description: `"${item.lemma}"을(를) 단어장에 추가했습니다.`,
       });
-      const newItem = { ...item, id: `${Date.now()}-${item.term}` };
+      const newItem = { ...item, id: `${Date.now()}-${item.lemma}` };
       return [newItem, ...prev];
     });
   }, [toast]);
 
-  const removeWord = useCallback((term: string) => {
+  const removeWord = useCallback((lemma: string) => {
     setWordBank(prev => {
-      const newBank = prev.filter(item => item.term !== term);
+      const newBank = prev.filter(item => item.lemma !== lemma);
       if (newBank.length < prev.length) {
         toast({
           title: "단어장에서 삭제됨",
-          description: `"${term}"을(를) 단어장에서 삭제했습니다.`,
+          description: `"${lemma}"을(를) 단어장에서 삭제했습니다.`,
           variant: "destructive",
         });
       }
@@ -68,12 +67,8 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [toast]);
 
-  const removeWordByTerm = useCallback((term: string) => {
-    removeWord(term);
-  }, [removeWord]);
-
-  const isWordSaved = useCallback((term: string) => {
-    return wordBank.some(item => item.term === term);
+  const isWordSaved = useCallback((lemma: string) => {
+    return wordBank.some(item => item.lemma === lemma);
   }, [wordBank]);
 
   const clearWordBank = useCallback(() => {
@@ -82,7 +77,7 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <WordBankContext.Provider value={{ wordBank, addWord, removeWord, removeWordByTerm, isWordSaved, clearWordBank }}>
+    <WordBankContext.Provider value={{ wordBank, addWord, removeWord, isWordSaved, clearWordBank }}>
       {children}
     </WordBankContext.Provider>
   );
