@@ -52,6 +52,12 @@ function StoryComponent({ storyId }: { storyId: string }) {
     }
   }, [storyId]);
 
+  useEffect(() => {
+    if (!isLoading && !story) {
+      notFound();
+    }
+  }, [isLoading, story]);
+
   const updateStoryInStorage = (updatedStory: Story) => {
     try {
       const savedStoriesRaw = localStorage.getItem(STORIES_STORAGE_KEY);
@@ -144,12 +150,8 @@ function StoryComponent({ storyId }: { storyId: string }) {
       });
   };
 
-  if (isLoading) {
+  if (isLoading || !story) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-  }
-  
-  if (!story) {
-    notFound();
   }
 
   const lessonText = story.lessons[story.currentDay];
