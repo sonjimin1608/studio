@@ -1,12 +1,12 @@
 'use server';
-import { generateSpanishStoryParagraph } from '@/ai/flows/generate-spanish-story';
+import { generateSpanishStory } from '@/ai/flows/generate-spanish-story';
 import { analyzeSentence } from '@/ai/flows/analyze-sentence';
-import type { GenerateSpanishStoryParagraphOutput } from '@/ai/flows/generate-spanish-story';
+import type { GenerateSpanishStoryOutput } from '@/ai/flows/generate-spanish-story';
 import type { AnalyzeSentenceOutput } from '@/ai/flows/analyze-sentence';
 
 type GenerateStoryResult = {
   success: true;
-  data: GenerateSpanishStoryParagraphOutput;
+  data: GenerateSpanishStoryOutput;
 } | {
   success: false;
   error: string;
@@ -22,9 +22,9 @@ type AnalyzeSentenceResult = {
 
 export async function generateNewStoryAction(topic: string): Promise<GenerateStoryResult> {
   try {
-    const result = await generateSpanishStoryParagraph({ topic, previousContext: '' });
-    if (!result.paragraph) {
-      throw new Error('Failed to generate the first paragraph.');
+    const result = await generateSpanishStory({ topic });
+    if (!result.paragraphs || result.paragraphs.length === 0) {
+      throw new Error('Failed to generate the story paragraphs.');
     }
     return { success: true, data: result };
   } catch (error) {
@@ -32,17 +32,6 @@ export async function generateNewStoryAction(topic: string): Promise<GenerateSto
     return { success: false, error: '새로운 이야기 생성에 실패했습니다. 다시 시도해주세요.' };
   }
 }
-
-export async function continueStoryAction(topic: string, previousContext: string): Promise<string | null> {
-    try {
-        const result = await generateSpanishStoryParagraph({ topic, previousContext });
-        return result.paragraph;
-    } catch (error) {
-        console.error('Error continuing story:', error);
-        return null;
-    }
-}
-
 
 export async function analyzeSentenceAction(sentence: string): Promise<AnalyzeSentenceResult> {
   try {

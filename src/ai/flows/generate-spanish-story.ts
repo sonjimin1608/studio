@@ -1,72 +1,62 @@
 'use server';
 
 /**
- * @fileOverview Generates a paragraph for a Spanish story based on a given topic and previous context.
+ * @fileOverview Generates a complete short Spanish story based on a given topic.
  *
- * - generateSpanishStoryParagraph - A function that handles the paragraph generation process.
- * - GenerateSpanishStoryParagraphInput - The input type for the generateSpanishStoryParagraph function.
- * - GenerateSpanishStoryParagraphOutput - The return type for the generateSpanishStoryParagraph function.
+ * - generateSpanishStory - A function that handles the story generation process.
+ * - GenerateSpanishStoryInput - The input type for the generateSpanishStory function.
+ * - GenerateSpanishStoryOutput - The return type for the generateSpanishStory function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const GenerateSpanishStoryParagraphInputSchema = z.object({
+const GenerateSpanishStoryInputSchema = z.object({
   topic: z.string().describe('The overall topic or theme of the story.'),
-  previousContext: z
-    .string()
-    .optional()
-    .describe('The preceding paragraphs of the story to maintain context.'),
 });
-export type GenerateSpanishStoryParagraphInput = z.infer<typeof GenerateSpanishStoryParagraphInputSchema>;
+export type GenerateSpanishStoryInput = z.infer<typeof GenerateSpanishStoryInputSchema>;
 
-const GenerateSpanishStoryParagraphOutputSchema = z.object({
+const GenerateSpanishStoryOutputSchema = z.object({
   title: z
     .string()
-    .optional()
-    .describe('A creative and fitting title for the story in Spanish. This should only be generated for the first paragraph.'),
-  paragraph: z.string().describe('A new paragraph for the Spanish story.'),
+    .describe('A creative and fitting title for the story in Spanish.'),
+  paragraphs: z.array(z.string()).describe('An array of paragraphs for the Spanish story. The story should have between 5 and 7 paragraphs.'),
 });
-export type GenerateSpanishStoryParagraphOutput = z.infer<typeof GenerateSpanishStoryParagraphOutputSchema>;
+export type GenerateSpanishStoryOutput = z.infer<typeof GenerateSpanishStoryOutputSchema>;
 
-export async function generateSpanishStoryParagraph(input: GenerateSpanishStoryParagraphInput): Promise<GenerateSpanishStoryParagraphOutput> {
-  return generateSpanishStoryParagraphFlow(input);
+export async function generateSpanishStory(input: GenerateSpanishStoryInput): Promise<GenerateSpanishStoryOutput> {
+  return generateSpanishStoryFlow(input);
 }
 
 const storyPrompt = ai.definePrompt({
-  name: 'storyParagraphPrompt',
-  input: {schema: GenerateSpanishStoryParagraphInputSchema},
-  output: {schema: GenerateSpanishStoryParagraphOutputSchema},
+  name: 'storyPrompt',
+  input: {schema: GenerateSpanishStoryInputSchema},
+  output: {schema: GenerateSpanishStoryOutputSchema},
   prompt: `You are a creative writer who specializes in writing short stories in Spanish for language learners.
 
-  The overall topic of the story is: {{topic}}
+Your task is to write a complete short story based on the given topic.
 
-  {{#if previousContext}}
-  Here is the story so far:
-  ---
-  {{{previousContext}}}
-  ---
-  Please continue the story with a new, interesting paragraph of about 5-7 sentences. Ensure it flows logically from the previous context. Do not generate a title.
-  {{else}}
-  Please start a new, interesting story on the given topic. 
-  1. Generate a creative, short, and fitting title for the story in Spanish.
-  2. Write the first paragraph, about 5-7 sentences long.
-  {{/if}}
-  
-  The paragraph should be engaging and use a variety of vocabulary and grammatical structures suitable for learners.
-  Output only the new paragraph (and title if it's the first paragraph).`,
+The overall topic of the story is: {{topic}}
+
+1.  **Title**: Generate a creative, short, and fitting title for the story in Spanish.
+2.  **Story**: Write a complete story consisting of 5 to 7 paragraphs. Each paragraph should be about 5-7 sentences long.
+    - The story must be engaging and use a variety of vocabulary and grammatical structures suitable for learners.
+    - Ensure the story has a clear beginning, middle, and end.
+    - Return the paragraphs as an array of strings.
+
+Your output must be a JSON object matching the provided schema.`,
 });
 
-const generateSpanishStoryParagraphFlow = ai.defineFlow(
+const generateSpanishStoryFlow = ai.defineFlow(
   {
-    name: 'generateSpanishStoryParagraphFlow',
-    inputSchema: GenerateSpanishStoryParagraphInputSchema,
-    outputSchema: GenerateSpanishStoryParagraphOutputSchema,
+    name: 'generateSpanishStoryFlow',
+    inputSchema: GenerateSpanishStoryInputSchema,
+    outputSchema: GenerateSpanishStoryOutputSchema,
   },
   async input => {
     const {output} = await storyPrompt(input);
     if (!output) {
-      throw new Error('Failed to generate the story paragraph.');
+      throw new Error('Failed to generate the story.');
     }
     return output;
   }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { analyzeSentenceAction, generateNewStoryAction, continueStoryAction } from './actions';
+import { analyzeSentenceAction, generateNewStoryAction } from './actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
@@ -45,7 +45,6 @@ export default function StoryPage() {
   const [story, setStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isContinuing, setIsContinuing] = useState(false);
   const [selectedSentence, setSelectedSentence] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeSentenceOutput | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -62,7 +61,7 @@ export default function StoryPage() {
         if (savedStoryRaw) {
           const savedStory = JSON.parse(savedStoryRaw);
           setStory(savedStory);
-          setCurrentParagraphIndex(savedStory.paragraphs.length - 1);
+          setCurrentParagraphIndex(0);
         }
       } catch (error) {
         console.error("이야기를 불러오는 데 실패했습니다.", error);
@@ -87,11 +86,11 @@ export default function StoryPage() {
     setIsGenerating(true);
     const result = await generateNewStoryAction(topic);
     
-    if (result.success && result.data?.paragraph) {
+    if (result.success && result.data?.paragraphs) {
       const newStory: Story = { 
         topic: topic, 
-        title: result.data.title || topic,
-        paragraphs: [result.data.paragraph] 
+        title: result.data.title,
+        paragraphs: result.data.paragraphs
       };
       setStory(newStory);
       setCurrentParagraphIndex(0);
@@ -101,24 +100,6 @@ export default function StoryPage() {
       toast({ title: "오류", description: result.error, variant: 'destructive' });
     }
     setIsGenerating(false);
-  };
-
-  const handleContinueStory = async () => {
-    if (!story) return;
-    setIsContinuing(true);
-    const previousContext = story.paragraphs.join('\n\n');
-    const newParagraph = await continueStoryAction(story.topic, previousContext);
-    if (newParagraph) {
-      setStory(prev => {
-        if (!prev) return null;
-        const updatedStory = { ...prev, paragraphs: [...prev.paragraphs, newParagraph] };
-        setCurrentParagraphIndex(updatedStory.paragraphs.length - 1);
-        return updatedStory;
-      });
-    } else {
-      toast({ title: "오류", description: "다음 단락을 생성하는데 실패했습니다.", variant: "destructive" });
-    }
-    setIsContinuing(false);
   };
   
   const handleSentenceClick = async (sentence: string) => {
@@ -217,7 +198,7 @@ export default function StoryPage() {
     <div className="max-w-4xl mx-auto">
       <Card>
         <CardHeader className="flex flex-row justify-between items-start">
-          <div className="flex-grow">
+          <div>
             <CardTitle className="font-headline text-3xl mb-2">{capitalizeFirstLetter(story.title)}</CardTitle>
             <CardDescription className="text-lg font-semibold text-foreground">주제: {capitalizeFirstLetter(story.topic)}</CardDescription>
           </div>
@@ -353,20 +334,13 @@ export default function StoryPage() {
                 {currentParagraphIndex + 1} / {story.paragraphs.length}
               </div>
 
-              {isLastParagraph ? (
-                <Button onClick={handleContinueStory} disabled={isContinuing}>
-                  {isContinuing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : '이야기 이어하기'}
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                </Button>
-              ) : (
-                <Button 
-                  onClick={() => setCurrentParagraphIndex(prev => prev + 1)} 
-                  disabled={isLastParagraph}
-                >
-                  다음
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                </Button>
-              )}
+              <Button 
+                onClick={() => setCurrentParagraphIndex(prev => prev + 1)} 
+                disabled={isLastParagraph}
+              >
+                다음
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
            </div>
         </CardFooter>
       </Card>
