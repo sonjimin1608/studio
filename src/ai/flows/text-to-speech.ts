@@ -65,7 +65,8 @@ const textToSpeechFlow = ai.defineFlow(
         responseModalities: ['AUDIO'],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'es-US-Standard-A' }, // Spanish (US) voice
+            // Corrected the voice name to a valid one.
+            prebuiltVoiceConfig: { voiceName: 'es-US-Wavenet-A' }, 
           },
         },
       },
