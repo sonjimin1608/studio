@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -18,7 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { WordBankItem, Story } from '@/lib/types';
-import { notFound, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 const STORIES_STORAGE_KEY = 'novela-stories';
 
@@ -32,37 +33,22 @@ function StoryComponent({ storyId }: { storyId: string }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
   const { addWord, removeWordByTerm, isWordSaved, wordBank } = useWordBank();
-  const [storyExists, setStoryExists] = useState<boolean | undefined>(undefined);
-
+  
   useEffect(() => {
     try {
       const savedStoriesRaw = localStorage.getItem(STORIES_STORAGE_KEY);
       if (savedStoriesRaw) {
         const savedStories: Story[] = JSON.parse(savedStoriesRaw);
         const currentStory = savedStories.find(s => s.id === storyId);
-        if (currentStory) {
-          setStory(currentStory);
-          setStoryExists(true);
-        } else {
-          setStory(null);
-          setStoryExists(false);
-        }
-      } else {
-        setStoryExists(false);
+        setStory(currentStory || null);
       }
     } catch (error) {
       console.error("저장된 이야기를 불러오는 데 실패했습니다.", error);
-      setStoryExists(false);
+      setStory(null);
     } finally {
       setIsLoading(false);
     }
   }, [storyId]);
-
-  useEffect(() => {
-    if (storyExists === false) {
-      notFound();
-    }
-  }, [storyExists]);
 
   const updateStoryInStorage = (updatedStory: Story) => {
     try {
@@ -156,8 +142,20 @@ function StoryComponent({ storyId }: { storyId: string }) {
       });
   };
 
-  if (isLoading || !story) {
+  if (isLoading) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+  
+  if (!story) {
+    return (
+        <div className="text-center py-20">
+            <h1 className="text-2xl font-bold">이야기를 찾을 수 없습니다.</h1>
+            <p className="text-muted-foreground mt-2">삭제되었거나 잘못된 주소일 수 있습니다.</p>
+            <Button asChild className="mt-4">
+                <a href="/">홈으로 돌아가기</a>
+            </Button>
+        </div>
+    );
   }
 
   const lessonText = story.lessons[story.currentDay];
@@ -286,3 +284,5 @@ export default function StoryPage({ params }: { params: { id: string } }) {
     </WordBankProvider>
   )
 }
+
+    
