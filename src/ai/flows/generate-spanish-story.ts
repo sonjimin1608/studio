@@ -21,6 +21,10 @@ const GenerateSpanishStoryParagraphInputSchema = z.object({
 export type GenerateSpanishStoryParagraphInput = z.infer<typeof GenerateSpanishStoryParagraphInputSchema>;
 
 const GenerateSpanishStoryParagraphOutputSchema = z.object({
+  title: z
+    .string()
+    .optional()
+    .describe('A creative and fitting title for the story in Spanish. This should only be generated for the first paragraph.'),
   paragraph: z.string().describe('A new paragraph for the Spanish story.'),
 });
 export type GenerateSpanishStoryParagraphOutput = z.infer<typeof GenerateSpanishStoryParagraphOutputSchema>;
@@ -42,13 +46,15 @@ const storyPrompt = ai.definePrompt({
   ---
   {{{previousContext}}}
   ---
-  Please continue the story with a new, interesting paragraph of about 5-7 sentences. Ensure it flows logically from the previous context.
+  Please continue the story with a new, interesting paragraph of about 5-7 sentences. Ensure it flows logically from the previous context. Do not generate a title.
   {{else}}
-  Please start a new, interesting story on the given topic. Write the first paragraph, about 5-7 sentences long.
+  Please start a new, interesting story on the given topic. 
+  1. Generate a creative, short, and fitting title for the story in Spanish.
+  2. Write the first paragraph, about 5-7 sentences long.
   {{/if}}
   
   The paragraph should be engaging and use a variety of vocabulary and grammatical structures suitable for learners.
-  Output only the new paragraph.`,
+  Output only the new paragraph (and title if it's the first paragraph).`,
 });
 
 const generateSpanishStoryParagraphFlow = ai.defineFlow(

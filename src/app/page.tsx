@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, Plus, Trash2, Wand2, ChevronRight, BookOpen } from 'lucide-react';
+import { Loader2, Plus, Trash2, Wand2, ChevronRight, BookOpen, ChevronLeft } from 'lucide-react';
 import { useWordBank } from '@/context/WordBankContext';
 import type { AnalyzeSentenceOutput } from '@/ai/flows/analyze-sentence';
 import {
@@ -24,6 +24,7 @@ const STORY_STORAGE_KEY = 'novela-story';
 
 interface Story {
   topic: string;
+  title: string;
   paragraphs: string[];
 }
 
@@ -36,6 +37,7 @@ export default function StoryPage() {
   const [analysisResult, setAnalysisResult] = useState<AnalyzeSentenceOutput | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [topic, setTopic] = useState('');
+  const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
   
   const { toast } = useToast();
   const { addWord, removeWordByTerm, isWordSaved, wordBank, clearWordBank } = useWordBank();
@@ -45,7 +47,9 @@ export default function StoryPage() {
       try {
         const savedStoryRaw = localStorage.getItem(STORY_STORAGE_KEY);
         if (savedStoryRaw) {
-          setStory(JSON.parse(savedStoryRaw));
+          const savedStory = JSON.parse(savedStoryRaw);
+          setStory(savedStory);
+          setCurrentParagraphIndex(savedStory.paragraphs.length - 1);
         }
       } catch (error) {
         console.error("이야기를 불러오는 데 실패했습니다.", error);
@@ -71,8 +75,14 @@ export default function StoryPage() {
     const result = await generateNewStoryAction(topic);
     
     if (result.success && result.data?.paragraph) {
-      setStory({ topic: topic, paragraphs: [result.data.paragraph] });
-      clearWordBank(); // 새 이야기 시작 시 단어장 초기화
+      const newStory: Story = { 
+        topic: topic, 
+        title: result.data.title || topic,
+        paragraphs: [result.data.paragraph] 
+      };
+      setStory(newStory);
+      setCurrentParagraphIndex(0);
+      clearWordBank();
       toast({ title: "성공", description: "새로운 이야기가 생성되었습니다!" });
     } else {
       toast({ title: "오류", description: result.error, variant: 'destructive' });
@@ -86,9 +96,14 @@ export default function StoryPage() {
     const previousContext = story.paragraphs.join('\n\n');
     const newParagraph = await continueStoryAction(story.topic, previousContext);
     if (newParagraph) {
-        setStory(prev => prev ? { ...prev, paragraphs: [...prev.paragraphs, newParagraph] } : null);
+      setStory(prev => {
+        if (!prev) return null;
+        const updatedStory = { ...prev, paragraphs: [...prev.paragraphs, newParagraph] };
+        setCurrentParagraphIndex(updatedStory.paragraphs.length - 1);
+        return updatedStory;
+      });
     } else {
-        toast({ title: "오류", description: "다음 단락을 생성하는데 실패했습니다.", variant: "destructive" });
+      toast({ title: "오류", description: "다음 단락을 생성하는데 실패했습니다.", variant: "destructive" });
     }
     setIsContinuing(false);
   };
@@ -110,6 +125,7 @@ export default function StoryPage() {
   const handleDeleteStory = () => {
     setStory(null);
     setTopic('');
+    setCurrentParagraphIndex(0);
     clearWordBank();
     localStorage.removeItem(STORY_STORAGE_KEY);
     toast({ title: "삭제됨", description: "이야기를 삭제했습니다." });
@@ -141,6 +157,10 @@ export default function StoryPage() {
           return part;
       });
   }, [wordBankMap]);
+
+  const capitalizeFirstLetter = (string: string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -174,40 +194,41 @@ export default function StoryPage() {
     );
   }
 
+  const currentParagraph = story.paragraphs[currentParagraphIndex];
+  const sentences = currentParagraph.split(/(?<=[.?!])\s+/).filter(s => s.trim() !== '');
+  const isLastParagraph = currentParagraphIndex === story.paragraphs.length - 1;
+
   return (
     <div className="max-w-4xl mx-auto">
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle className="font-headline text-3xl">{story.topic}</CardTitle>
+            <div>
+              <CardTitle className="font-headline text-3xl">{capitalizeFirstLetter(story.title)}</CardTitle>
+              <CardDescription className="mt-1">주제: {story.topic}</CardDescription>
+            </div>
             <Button variant="destructive" size="icon" onClick={handleDeleteStory}>
               <Trash2 className="h-4 w-4" />
               <span className="sr-only">삭제</span>
             </Button>
           </div>
-          <CardDescription>문장을 클릭하여 문법과 단어 분석을 확인하세요.</CardDescription>
         </CardHeader>
-        <CardContent className="text-lg leading-relaxed space-y-4">
+        <CardContent className="text-lg leading-relaxed space-y-4 min-h-[200px]">
           <TooltipProvider>
             <Sheet open={!!selectedSentence} onOpenChange={(isOpen) => !isOpen && setSelectedSentence(null)}>
               <div>
-                {story.paragraphs.map((paragraph, pIndex) => {
-                  const sentences = paragraph.split(/(?<=[.?!])\s+/).filter(s => s.trim() !== '');
-                  return (
-                    <p key={pIndex} className="mb-4">
-                      {sentences.map((sentence, sIndex) => (
-                        <SheetTrigger asChild key={sIndex}>
-                          <span
-                            onClick={() => handleSentenceClick(sentence)}
-                            className="cursor-pointer hover:bg-accent/50 p-1 rounded-md transition-colors"
-                          >
-                            {highlightWords(sentence)}{' '}
-                          </span>
-                        </SheetTrigger>
-                      ))}
-                    </p>
-                  );
-                })}
+                <p className="mb-4">
+                  {sentences.map((sentence, sIndex) => (
+                    <SheetTrigger asChild key={sIndex}>
+                      <span
+                        onClick={() => handleSentenceClick(sentence)}
+                        className="cursor-pointer hover:bg-accent/50 p-1 rounded-md transition-colors"
+                      >
+                        {highlightWords(sentence)}{' '}
+                      </span>
+                    </SheetTrigger>
+                  ))}
+                </p>
               </div>
               <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
                 <SheetHeader>
@@ -285,11 +306,34 @@ export default function StoryPage() {
             </Sheet>
           </TooltipProvider>
         </CardContent>
-        <CardFooter className="flex justify-end">
-          <Button onClick={handleContinueStory} disabled={isContinuing}>
-            {isContinuing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
-            이야기 이어하기
+        <CardFooter className="flex justify-between items-center">
+          <Button 
+            onClick={() => setCurrentParagraphIndex(prev => prev - 1)} 
+            disabled={currentParagraphIndex === 0}
+            variant="outline"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            이전
           </Button>
+
+          <div className="text-sm text-muted-foreground">
+            {currentParagraphIndex + 1} / {story.paragraphs.length}
+          </div>
+
+          {isLastParagraph ? (
+            <Button onClick={handleContinueStory} disabled={isContinuing}>
+              {isContinuing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
+              이야기 이어하기
+            </Button>
+          ) : (
+            <Button 
+              onClick={() => setCurrentParagraphIndex(prev => prev + 1)} 
+              disabled={isLastParagraph}
+            >
+              다음
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          )}
         </CardFooter>
       </Card>
     </div>
