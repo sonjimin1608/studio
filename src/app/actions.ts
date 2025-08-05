@@ -57,6 +57,6 @@ export async function textToSpeechAction(text: string): Promise<TextToSpeechResu
     return { success: true, data: result };
   } catch (error) {
     console.error('Error converting text to speech:', error);
-    return { success: false, error: '음성 변환에 실패했습니다. 다시 시도해주세요.' };
+    return { success: false, error: `음성 변환에 실패했습니다: ${error}` };
   }
 }

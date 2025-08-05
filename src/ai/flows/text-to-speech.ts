@@ -66,7 +66,7 @@ const textToSpeechFlow = ai.defineFlow(
         speechConfig: {
           voiceConfig: {
             // Corrected the voice name to a valid one.
-            prebuiltVoiceConfig: { voiceName: 'es-US-Wavenet-A' }, 
+            prebuiltVoiceConfig: { voiceName: 'laomedeia' },
           },
         },
       },
