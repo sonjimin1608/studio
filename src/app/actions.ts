@@ -1,6 +1,7 @@
 'use server';
 import { generateSpanishStory, type GenerateSpanishStoryOutput } from '@/ai/flows/generate-spanish-story';
 import { analyzeSentence, type AnalyzeSentenceOutput } from '@/ai/flows/analyze-sentence';
+import { textToSpeech, type TextToSpeechOutput } from '@/ai/flows/text-to-speech';
 
 
 type GenerateStoryResult = {
@@ -14,6 +15,14 @@ type GenerateStoryResult = {
 type AnalyzeSentenceResult = {
   success: true;
   data: AnalyzeSentenceOutput; 
+} | {
+  success: false;
+  error: string;
+}
+
+type TextToSpeechResult = {
+  success: true;
+  data: TextToSpeechOutput;
 } | {
   success: false;
   error: string;
@@ -39,5 +48,15 @@ export async function analyzeSentenceAction(sentence: string): Promise<AnalyzeSe
   } catch (error) {
     console.error('Error analyzing sentence:', error);
     return { success: false, error: '문장 분석에 실패했습니다. 다시 시도해주세요.' };
+  }
+}
+
+export async function textToSpeechAction(text: string): Promise<TextToSpeechResult> {
+  try {
+    const result = await textToSpeech({ text });
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error converting text to speech:', error);
+    return { success: false, error: '음성 변환에 실패했습니다. 다시 시도해주세요.' };
   }
 }

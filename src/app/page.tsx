@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { analyzeSentenceAction, generateNewStoryAction } from './actions';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { analyzeSentenceAction, generateNewStoryAction, textToSpeechAction } from './actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, Plus, Trash2, Wand2, ChevronRight, BookOpen, ChevronLeft } from 'lucide-react';
+import { Loader2, Plus, Trash2, Wand2, ChevronRight, BookOpen, ChevronLeft, Volume2 } from 'lucide-react';
 import { useWordBank } from '@/context/WordBankContext';
 import type { AnalyzeSentenceOutput, VocabularyItem } from '@/ai/flows/analyze-sentence';
 import {
@@ -50,6 +50,9 @@ export default function StoryPage() {
 
   const [topic, setTopic] = useState('');
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
+
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   
   const { toast } = useToast();
   const { addWord, removeWord, isWordSaved } = useWordBank();
@@ -71,6 +74,12 @@ export default function StoryPage() {
         setIsLoading(false);
       }
     }
+    
+    // Setup audio element
+    if (!audioRef.current) {
+        audioRef.current = new Audio();
+        audioRef.current.onended = () => setIsSpeaking(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -80,7 +89,6 @@ export default function StoryPage() {
   }, [story]);
 
   const analyzeAndCacheSentence = useCallback(async (sentence: string, paragraphIndex: number): Promise<SentenceAnalysis> => {
-    // Check cache first
     const cachedAnalysis = paragraphAnalyses[paragraphIndex]?.find(p => p.sentence === sentence);
     if (cachedAnalysis && (cachedAnalysis.analysis || cachedAnalysis.isLoading)) {
       return cachedAnalysis;
@@ -88,7 +96,6 @@ export default function StoryPage() {
 
     const analysisState: SentenceAnalysis = { sentence, analysis: null, isLoading: true };
     
-    // Set loading state
     setParagraphAnalyses(prev => {
         const para = prev[paragraphIndex] || [];
         if (!para.some(s => s.sentence === sentence)) {
@@ -136,6 +143,24 @@ export default function StoryPage() {
         definition: `${word.pos}${word.gender && word.gender !== 'n/a' ? ` (${word.gender})` : ''} - ${word.definition}`,
         type: 'vocabulary'
       });
+    }
+  }
+
+  const handleSpeak = async () => {
+    if (!activeAnalysis?.sentence || isSpeaking) return;
+
+    setIsSpeaking(true);
+    const result = await textToSpeechAction(activeAnalysis.sentence);
+
+    if (result.success && audioRef.current) {
+      audioRef.current.src = result.data.audioDataUri;
+      audioRef.current.play().catch(e => {
+        console.error("오디오 재생에 실패했습니다.", e);
+        setIsSpeaking(false);
+      });
+    } else {
+      toast({ title: "오류", description: result.error, variant: 'destructive' });
+      setIsSpeaking(false);
     }
   }
 
@@ -262,7 +287,12 @@ export default function StoryPage() {
 
               <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
                 <SheetHeader>
-                  <SheetTitle className="font-headline">문장 분석</SheetTitle>
+                   <div className="flex items-center gap-2">
+                    <SheetTitle className="font-headline">문장 분석</SheetTitle>
+                    <Button variant="ghost" size="icon" onClick={handleSpeak} disabled={isSpeaking}>
+                      {isSpeaking ? <Loader2 className="h-5 w-5 animate-spin" /> : <Volume2 className="h-5 w-5" />}
+                    </Button>
+                  </div>
                   <SheetDescription asChild>
                     <div className="mt-2 p-3 bg-muted rounded-md text-sm">{activeAnalysis?.sentence}</div>
                   </SheetDescription>
