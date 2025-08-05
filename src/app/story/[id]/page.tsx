@@ -32,6 +32,7 @@ function StoryComponent({ storyId }: { storyId: string }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
   const { addWord, removeWordByTerm, isWordSaved, wordBank } = useWordBank();
+  const [storyExists, setStoryExists] = useState<boolean | undefined>(undefined);
 
   useEffect(() => {
     try {
@@ -41,22 +42,27 @@ function StoryComponent({ storyId }: { storyId: string }) {
         const currentStory = savedStories.find(s => s.id === storyId);
         if (currentStory) {
           setStory(currentStory);
+          setStoryExists(true);
         } else {
-          setStory(null); // Story not found
+          setStory(null);
+          setStoryExists(false);
         }
+      } else {
+        setStoryExists(false);
       }
     } catch (error) {
       console.error("저장된 이야기를 불러오는 데 실패했습니다.", error);
+      setStoryExists(false);
     } finally {
       setIsLoading(false);
     }
   }, [storyId]);
 
   useEffect(() => {
-    if (!isLoading && !story) {
+    if (storyExists === false) {
       notFound();
     }
-  }, [isLoading, story]);
+  }, [storyExists]);
 
   const updateStoryInStorage = (updatedStory: Story) => {
     try {
