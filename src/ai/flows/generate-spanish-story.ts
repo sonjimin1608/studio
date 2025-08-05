@@ -18,7 +18,7 @@ const GenerateSpanishStoryOutputSchema = z.object({
   title: z
     .string()
     .describe('A creative and fitting title for the story in Spanish.'),
-  paragraphs: z.array(z.string()).describe('An array of paragraphs for the Spanish story. The story should be approximately 20 paragraphs long.'),
+  paragraphs: z.array(z.string()).describe('An array of paragraphs for the Spanish story. The story should be approximately 25 paragraphs long.'),
 });
 export type GenerateSpanishStoryOutput = z.infer<typeof GenerateSpanishStoryOutputSchema>;
 
@@ -38,7 +38,7 @@ Your task is to write a complete short story based on the given topic.
 The overall topic of the story is: {{topic}}
 
 1.  **Title**: Generate a creative, short, and fitting title for the story in Spanish.
-2.  **Story**: Write a complete story consisting of approximately 20 paragraphs. Each paragraph should be about 5-7 sentences long.
+2.  **Story**: Write a complete story consisting of approximately 25 paragraphs. Each paragraph must be between 5 and 7 sentences long.
     - The story must be engaging and use a variety of vocabulary and grammatical structures suitable for learners.
     - Ensure the story has a clear beginning, middle, and end.
     - Return the paragraphs as an array of strings.
