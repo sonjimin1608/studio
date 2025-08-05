@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
@@ -74,7 +75,12 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
   const clearWordBank = useCallback(() => {
     setWordBank([]);
     localStorage.removeItem(WORD_BANK_STORAGE_KEY);
-  }, []);
+     toast({
+        title: "단어장 삭제됨",
+        description: "모든 단어를 단어장에서 삭제했습니다.",
+        variant: "destructive",
+      });
+  }, [toast]);
 
   return (
     <WordBankContext.Provider value={{ wordBank, addWord, removeWord, isWordSaved, clearWordBank }}>

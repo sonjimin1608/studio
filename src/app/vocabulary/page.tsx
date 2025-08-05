@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef } from 'react';
@@ -9,9 +10,20 @@ import { Trash2, Bookmark } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { WordBankItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function VocabularyPage() {
-  const { wordBank, removeWord } = useWordBank();
+  const { wordBank, removeWord, clearWordBank } = useWordBank();
   const [activeCardLemma, setActiveCardLemma] = useState<string | null>(null);
   const touchTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -92,9 +104,31 @@ export default function VocabularyPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-4xl font-headline mb-2">나의 단어장</h1>
-        <p className="text-muted-foreground">저장한 단어와 문법을 복습하세요.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-4xl font-headline mb-2">나의 단어장</h1>
+          <p className="text-muted-foreground">저장한 단어와 문법을 복습하세요.</p>
+        </div>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive">
+              <Trash2 className="mr-2 h-4 w-4" />
+              전체 삭제
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>정말로 모든 단어를 삭제하시겠습니까?</AlertDialogTitle>
+              <AlertDialogDescription>
+                이 작업은 되돌릴 수 없습니다. 단어장에 저장된 모든 항목이 영구적으로 삭제됩니다.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogAction onClick={clearWordBank}>삭제</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex">

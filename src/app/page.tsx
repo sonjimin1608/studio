@@ -161,35 +161,44 @@ export default function StoryPage() {
   
     const wordBankMap = new Map<string, WordBankItem>();
     wordBank.forEach(item => {
-      // Prioritize vocabulary over grammar if lemmas are the same
-      if (!wordBankMap.has(item.lemma) || item.type === 'vocabulary') {
-        wordBankMap.set(item.lemma.toLowerCase(), item);
-      }
+      wordBankMap.set(item.lemma.toLowerCase(), item);
     });
   
-    const regex = new RegExp(`\\b(${Array.from(wordBankMap.keys()).join('|')})\\b`, 'gi');
+    // Create a regex from word bank lemmas. Match whole words only.
+    // The regex should handle variations (e.g., "soldado" should match "soldados").
+    // A simple way is to match word stems. For Spanish, this can be tricky.
+    // A more robust approach would be needed for perfect stemming, but for many cases,
+    // just checking if a word *starts with* a lemma can work reasonably well.
+    const lemmas = Array.from(wordBankMap.keys()).sort((a, b) => b.length - a.length);
+    const regex = new RegExp(`\\b(${lemmas.join('|')})[a-z]*\\b`, 'gi');
   
     const parts = text.split(regex);
   
     return parts.map((part, index) => {
-      const lowerPart = part.toLowerCase();
-      // Check if any key in the map is a substring of the lowerPart (for handling word variations)
-      const matchedKey = Array.from(wordBankMap.keys()).find(key => lowerPart.startsWith(key));
-      const item = matchedKey ? wordBankMap.get(matchedKey) : undefined;
-  
-      if (item && part.match(new RegExp(`^${item.lemma}`, 'i'))) {
-        return (
-          <Tooltip key={index}>
-            <TooltipTrigger asChild>
-              <span className="bg-red-300/50 dark:bg-red-800/50 rounded-md cursor-help">{part}</span>
-            </TooltipTrigger>
-            <TooltipContent>{item.definition}</TooltipContent>
-          </Tooltip>
-        );
+      if (index % 2 === 1) { // It's a matched part
+        const lowerPart = part.toLowerCase();
+        const matchedLemma = lemmas.find(lemma => lowerPart.startsWith(lemma));
+        const item = matchedLemma ? wordBankMap.get(matchedLemma) : undefined;
+        
+        if (item) {
+          return (
+            <Tooltip key={index}>
+              <TooltipTrigger asChild>
+                <span className="bg-red-300/50 dark:bg-red-800/50 rounded-md cursor-help">{part}</span>
+              </TooltipTrigger>
+              <TooltipContent className="flex flex-col gap-2 p-2 items-start">
+                <span>{item.definition}</span>
+                <Button variant="destructive" size="sm" className="h-auto px-2 py-1 text-xs" onClick={() => removeWord(item.lemma)}>
+                  단어장에서 삭제
+                </Button>
+              </TooltipContent>
+            </Tooltip>
+          );
+        }
       }
       return part;
     });
-  }, [wordBank]);
+  }, [wordBank, removeWord]);
 
 
   const capitalizeFirstLetter = (string: string) => {
