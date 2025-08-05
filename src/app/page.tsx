@@ -42,6 +42,8 @@ interface Story {
 }
 
 type VocabularyWord = AnalyzeSentenceOutput['vocabulary'][0];
+type GrammarItem = AnalyzeSentenceOutput['grammar'][0];
+
 
 export default function StoryPage() {
   const [story, setStory] = useState<Story | null>(null);
@@ -138,7 +140,7 @@ export default function StoryPage() {
     }
   }
 
-  const handleToggleGrammar = (grammarItem: AnalyzeSentenceOutput['grammar'][0]) => {
+  const handleToggleGrammar = (grammarItem: GrammarItem) => {
      if (isWordSaved(grammarItem.term)) {
       removeWord(grammarItem.term);
     } else {
@@ -151,38 +153,40 @@ export default function StoryPage() {
     }
   }
   
-  const wordBankLemmas = useMemo(() => {
-    return new Set(wordBank.map(item => item.lemma));
-  }, [wordBank]);
-
   const highlightWords = useCallback((text: string) => {
-    if (!analysisResult) {
+    if (!wordBank || wordBank.length === 0) {
       return text;
     }
   
-    const vocabularyMap = new Map(analysisResult.vocabulary.map(v => [v.term.toLowerCase(), v.lemma]));
-    const wordsAndPunctuation = text.split(/(\b[\w\u00C0-\u017F']+\b|[.,?!;])/);
+    const wordBankMap = new Map<string, WordBankItem>();
+    wordBank.forEach(item => {
+      // Prioritize vocabulary over grammar if lemmas are the same
+      if (!wordBankMap.has(item.lemma) || item.type === 'vocabulary') {
+        wordBankMap.set(item.lemma.toLowerCase(), item);
+      }
+    });
   
-    return wordsAndPunctuation.map((part, index) => {
+    const regex = new RegExp(`\\b(${Array.from(wordBankMap.keys()).join('|')})\\b`, 'gi');
+  
+    const parts = text.split(regex);
+  
+    return parts.map((part, index) => {
       const lowerPart = part.toLowerCase();
-      const lemma = vocabularyMap.get(lowerPart);
+      const item = wordBankMap.get(lowerPart);
   
-      if (lemma && wordBankLemmas.has(lemma)) {
-        const item = wordBank.find(i => i.lemma === lemma);
-        if (item) {
-          return (
-            <Tooltip key={index}>
-              <TooltipTrigger asChild>
-                <span className="bg-red-300/50 dark:bg-red-800/50 rounded-md cursor-help">{part}</span>
-              </TooltipTrigger>
-              <TooltipContent>{item.definition}</TooltipContent>
-            </Tooltip>
-          );
-        }
+      if (item) {
+        return (
+          <Tooltip key={index}>
+            <TooltipTrigger asChild>
+              <span className="bg-red-300/50 dark:bg-red-800/50 rounded-md cursor-help">{part}</span>
+            </TooltipTrigger>
+            <TooltipContent>{item.definition}</TooltipContent>
+          </Tooltip>
+        );
       }
       return part;
     });
-  }, [analysisResult, wordBank, wordBankLemmas]);
+  }, [wordBank]);
 
 
   const capitalizeFirstLetter = (string: string) => {
@@ -233,7 +237,7 @@ export default function StoryPage() {
         <CardHeader className="flex flex-row justify-between items-start">
           <div>
             <CardTitle className="font-headline text-3xl mb-2">{capitalizeFirstLetter(story.title)}</CardTitle>
-            <CardDescription className="text-lg font-semibold text-foreground">{capitalizeFirstLetter(story.topic)}</CardDescription>
+            {story.title && <CardDescription className="text-lg font-semibold text-foreground">{capitalizeFirstLetter(story.topic)}</CardDescription>}
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
