@@ -54,7 +54,7 @@ export default function StoryPage() {
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
   
   const { toast } = useToast();
-  const { addWord, removeWord, isWordSaved, wordBank, clearWordBank } = useWordBank();
+  const { addWord, removeWord, isWordSaved, wordBank } = useWordBank();
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -96,7 +96,6 @@ export default function StoryPage() {
       };
       setStory(newStory);
       setCurrentParagraphIndex(0);
-      clearWordBank();
       toast({ title: "성공", description: "새로운 이야기가 생성되었습니다!" });
     } else {
       toast({ title: "오류", description: result.error, variant: 'destructive' });
@@ -122,7 +121,6 @@ export default function StoryPage() {
     setStory(null);
     setTopic('');
     setCurrentParagraphIndex(0);
-    clearWordBank();
     localStorage.removeItem(STORY_STORAGE_KEY);
     toast({ title: "삭제됨", description: "이야기를 삭제했습니다." });
   }
@@ -158,26 +156,34 @@ export default function StoryPage() {
   }, [wordBank]);
 
   const highlightWords = useCallback((text: string) => {
-      const wordsAndPunctuation = text.split(/(\b[\w\u00C0-\u017F']+\b|[.,?!;])/);
-      return wordsAndPunctuation.map((part, index) => {
-          const lowerPart = part.toLowerCase();
-          
-          if (wordBankLemmas.has(lowerPart)) {
-            const item = wordBank.find(i => i.lemma === lowerPart);
-             if (item) {
-                return (
-                    <Tooltip key={index}>
-                        <TooltipTrigger asChild>
-                            <span className="bg-red-300/50 dark:bg-red-800/50 rounded-md cursor-help">{part}</span>
-                        </TooltipTrigger>
-                        <TooltipContent>{item.definition}</TooltipContent>
-                    </Tooltip>
-                );
-             }
-          }
-          return part;
-      });
-  }, [wordBank, wordBankLemmas]);
+    if (!analysisResult) {
+      return text;
+    }
+  
+    const vocabularyMap = new Map(analysisResult.vocabulary.map(v => [v.term.toLowerCase(), v.lemma]));
+    const wordsAndPunctuation = text.split(/(\b[\w\u00C0-\u017F']+\b|[.,?!;])/);
+  
+    return wordsAndPunctuation.map((part, index) => {
+      const lowerPart = part.toLowerCase();
+      const lemma = vocabularyMap.get(lowerPart);
+  
+      if (lemma && wordBankLemmas.has(lemma)) {
+        const item = wordBank.find(i => i.lemma === lemma);
+        if (item) {
+          return (
+            <Tooltip key={index}>
+              <TooltipTrigger asChild>
+                <span className="bg-red-300/50 dark:bg-red-800/50 rounded-md cursor-help">{part}</span>
+              </TooltipTrigger>
+              <TooltipContent>{item.definition}</TooltipContent>
+            </Tooltip>
+          );
+        }
+      }
+      return part;
+    });
+  }, [analysisResult, wordBank, wordBankLemmas]);
+
 
   const capitalizeFirstLetter = (string: string) => {
     if (!string) return '';
@@ -227,7 +233,7 @@ export default function StoryPage() {
         <CardHeader className="flex flex-row justify-between items-start">
           <div>
             <CardTitle className="font-headline text-3xl mb-2">{capitalizeFirstLetter(story.title)}</CardTitle>
-            <CardDescription className="text-lg font-semibold text-foreground">주제: {capitalizeFirstLetter(story.topic)}</CardDescription>
+            <CardDescription className="text-lg font-semibold text-foreground">{capitalizeFirstLetter(story.topic)}</CardDescription>
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -320,7 +326,7 @@ export default function StoryPage() {
                             return (
                               <li key={index} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
                                 <div>
-                                  <p className="font-semibold">{item.term} ({item.lemma})</p>
+                                  <p className="font-semibold">{item.lemma}</p>
                                   <p className="text-sm text-muted-foreground">{item.definition}</p>
                                 </div>
                                  <Button
