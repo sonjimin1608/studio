@@ -56,8 +56,9 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
 
   const removeWord = useCallback((lemma: string) => {
     setWordBank(prev => {
+      const itemExists = prev.some(item => item.lemma === lemma);
       const newBank = prev.filter(item => item.lemma !== lemma);
-      if (newBank.length < prev.length) {
+      if (itemExists) {
         toast({
           title: "단어장에서 삭제됨",
           description: `"${lemma}"을(를) 단어장에서 삭제했습니다.`,
@@ -73,14 +74,16 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
   }, [wordBank]);
 
   const clearWordBank = useCallback(() => {
-    setWordBank([]);
-    localStorage.removeItem(WORD_BANK_STORAGE_KEY);
-     toast({
-        title: "단어장 삭제됨",
-        description: "모든 단어를 단어장에서 삭제했습니다.",
-        variant: "destructive",
-      });
-  }, [toast]);
+    if (wordBank.length > 0) {
+      setWordBank([]);
+      localStorage.removeItem(WORD_BANK_STORAGE_KEY);
+       toast({
+          title: "단어장 삭제됨",
+          description: "모든 단어를 단어장에서 삭제했습니다.",
+          variant: "destructive",
+        });
+    }
+  }, [toast, wordBank.length]);
 
   return (
     <WordBankContext.Provider value={{ wordBank, addWord, removeWord, isWordSaved, clearWordBank }}>
