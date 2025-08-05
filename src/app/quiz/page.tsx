@@ -7,18 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { BrainCircuit, BookCopy, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
-import { WordBankProvider } from '@/context/WordBankContext';
-
 
 interface QuizQuestion {
   question: string;
   options: string[];
   correctAnswer: string;
+  term: string;
 }
 
 const MIN_WORDS_FOR_QUIZ = 4;
 
-function QuizComponent() {
+export default function QuizPage() {
   const { wordBank } = useWordBank();
   const [quizState, setQuizState] = useState<'idle' | 'running' | 'finished'>('idle');
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -37,11 +36,11 @@ function QuizComponent() {
       const correctAnswer = item.definition;
       
       let wrongAnswers = arr
-        .filter(i => i.id !== item.id)
+        .filter(i => i.term !== item.term)
         .map(i => i.definition);
       
       // Shuffle wrong answers and take 3
-      wrongAnswers = wrongAnswers.sort(() => 0.5 - Math.random()).slice(0, 3);
+      wrongAnswers = [...new Set(wrongAnswers)].sort(() => 0.5 - Math.random()).slice(0, 3);
         
       while(wrongAnswers.length < 3) {
           wrongAnswers.push(`오답 예시 ${wrongAnswers.length + 1}`);
@@ -53,6 +52,7 @@ function QuizComponent() {
         question: item.term,
         options,
         correctAnswer,
+        term: item.term,
       };
     });
 
@@ -104,7 +104,7 @@ function QuizComponent() {
   }
 
   if (quizState === 'finished') {
-    const percentage = Math.round((score / questions.length) * 100);
+    const percentage = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
     return (
       <Card className="max-w-2xl mx-auto text-center">
         <CardHeader>
@@ -166,12 +166,4 @@ function QuizComponent() {
       </Card>
     </div>
   );
-}
-
-export default function QuizPage() {
-    return (
-        <WordBankProvider>
-            <QuizComponent />
-        </WordBankProvider>
-    )
 }

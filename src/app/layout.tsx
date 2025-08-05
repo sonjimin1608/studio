@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import Header from '@/components/Header';
+import { WordBankProvider } from '@/context/WordBankContext';
 
 export const metadata: Metadata = {
   title: 'Ñovel',
@@ -21,6 +22,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Belleza&family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
+        <WordBankProvider>
           <div className="flex flex-col min-h-screen">
             <Header />
             <main className="flex-grow container mx-auto px-4 py-8">
@@ -28,6 +30,7 @@ export default function RootLayout({
             </main>
           </div>
           <Toaster />
+        </WordBankProvider>
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useWordBank, WordBankProvider } from '@/context/WordBankContext';
+import { useWordBank } from '@/context/WordBankContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,7 @@ import { Trash2, Bookmark } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { WordBankItem } from '@/lib/types';
 
-function VocabularyComponent() {
+export default function VocabularyPage() {
   const { wordBank, removeWord } = useWordBank();
 
   const vocabulary = wordBank.filter(item => item.type === 'vocabulary');
@@ -27,7 +27,7 @@ function VocabularyComponent() {
   const WordList = ({ items }: { items: WordBankItem[] }) => (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {items.map((item) => (
-        <Card key={item.id} className="flex flex-col">
+        <Card key={item.term} className="flex flex-col">
           <CardHeader>
             <div className="flex justify-between items-start gap-2">
               <div>
@@ -36,7 +36,7 @@ function VocabularyComponent() {
                   {item.type === 'grammar' ? '문법' : '어휘'}
                 </Badge>
               </div>
-              <Button variant="ghost" size="icon" className="flex-shrink-0" onClick={() => removeWord(item.id)}>
+              <Button variant="ghost" size="icon" className="flex-shrink-0" onClick={() => removeWord(item.term)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
@@ -74,12 +74,4 @@ function VocabularyComponent() {
       </Tabs>
     </div>
   );
-}
-
-export default function VocabularyPage() {
-    return (
-        <WordBankProvider>
-            <VocabularyComponent />
-        </WordBankProvider>
-    )
 }

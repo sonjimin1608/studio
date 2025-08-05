@@ -6,7 +6,7 @@ import { BookOpenText, Bookmark, BrainCircuit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
-  { href: '/', label: '나의 이야기', icon: BookOpenText },
+  { href: '/', label: '오늘의 이야기', icon: BookOpenText },
   { href: '/vocabulary', label: '나의 단어장', icon: Bookmark },
   { href: '/quiz', label: '퀴즈', icon: BrainCircuit },
 ];

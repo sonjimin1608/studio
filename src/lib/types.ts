@@ -5,10 +5,4 @@ export interface WordBankItem {
   type: 'vocabulary' | 'grammar';
 }
 
-export interface Story {
-    id: string;
-    topic: string;
-    lessons: string[];
-    createdAt: string;
-    currentDay: number;
-}
+// Story type is now managed within page.tsx as it's no longer shared across pages.
