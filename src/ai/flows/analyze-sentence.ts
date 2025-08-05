@@ -1,16 +1,13 @@
-
 'use server';
 
 /**
  * @fileOverview Analyzes a sentence, identifies grammatical elements, and provides vocabulary definitions with lemmas.
  *
  * - analyzeSentence - Analyzes the given sentence and returns grammatical elements and vocabulary definitions.
- * - AnalyzeSentenceInput - The input type for the analyzeSentence function.
- * - AnalyzeSentenceOutput - The return type for the analyzeSentence function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const AnalyzeSentenceInputSchema = z.object({
   sentence: z.string().describe('The sentence to analyze.'),
@@ -25,6 +22,8 @@ const VocabularyItemSchema = z.object({
   definition: z.string().describe('A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".'),
 });
 
+export type VocabularyItem = z.infer<typeof VocabularyItemSchema>;
+
 const GrammarItemSchema = z.object({
   topic: z.string().describe('The name of the grammatical concept (e.g., "Preterite Tense", "Ser vs. Estar").'),
   explanation: z.string().describe('A concise explanation of the grammatical rule in Korean.'),
@@ -36,6 +35,7 @@ const AnalyzeSentenceOutputSchema = z.object({
   grammar: z.array(GrammarItemSchema).optional().describe('A list of key grammatical points found in the sentence. If no specific grammar points are noteworthy, this can be omitted.'),
 });
 export type AnalyzeSentenceOutput = z.infer<typeof AnalyzeSentenceOutputSchema>;
+
 
 export async function analyzeSentence(input: AnalyzeSentenceInput): Promise<AnalyzeSentenceOutput> {
   return analyzeSentenceFlow(input);

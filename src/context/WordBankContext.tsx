@@ -2,8 +2,14 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import type { WordBankItem } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+
+export interface WordBankItem {
+  term: string;
+  lemma: string;
+  definition: string;
+  type: 'vocabulary' | 'grammar';
+}
 
 interface WordBankContextType {
   wordBank: WordBankItem[];
@@ -45,7 +51,7 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
       if (prev.some(i => i.term === item.term)) {
         return prev;
       }
-      const newItem = { ...item, id: `${Date.now()}-${item.term}` };
+      const newItem = { ...item };
       return [newItem, ...prev];
     });
      toast({

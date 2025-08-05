@@ -1,8 +1,7 @@
 'use server';
-import { generateSpanishStory } from '@/ai/flows/generate-spanish-story';
-import { analyzeSentence } from '@/ai/flows/analyze-sentence';
-import type { GenerateSpanishStoryOutput } from '@/ai/flows/generate-spanish-story';
-import type { AnalyzeSentenceOutput } from '@/ai/flows/analyze-sentence';
+import { generateSpanishStory, type GenerateSpanishStoryOutput } from '@/ai/flows/generate-spanish-story';
+import { analyzeSentence, type AnalyzeSentenceOutput } from '@/ai/flows/analyze-sentence';
+
 
 type GenerateStoryResult = {
   success: true;
@@ -14,7 +13,7 @@ type GenerateStoryResult = {
 
 type AnalyzeSentenceResult = {
   success: true;
-  data: AnalyzeSentenceOutput;
+  data: AnalyzeSentenceOutput; 
 } | {
   success: false;
   error: string;

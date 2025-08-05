@@ -4,12 +4,10 @@
  * @fileOverview Generates a complete short Spanish story based on a given topic.
  *
  * - generateSpanishStory - A function that handles the story generation process.
- * - GenerateSpanishStoryInput - The input type for the generateSpanishStory function.
- * - GenerateSpanishStoryOutput - The return type for the generateSpanishStory function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const GenerateSpanishStoryInputSchema = z.object({
   topic: z.string().describe('The overall topic or theme of the story.'),
@@ -23,6 +21,7 @@ const GenerateSpanishStoryOutputSchema = z.object({
   paragraphs: z.array(z.string()).describe('An array of paragraphs for the Spanish story. The story should be approximately 20 paragraphs long.'),
 });
 export type GenerateSpanishStoryOutput = z.infer<typeof GenerateSpanishStoryOutputSchema>;
+
 
 export async function generateSpanishStory(input: GenerateSpanishStoryInput): Promise<GenerateSpanishStoryOutput> {
   return generateSpanishStoryFlow(input);

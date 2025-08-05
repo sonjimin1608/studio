@@ -2,13 +2,12 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { useWordBank } from '@/context/WordBankContext';
+import { useWordBank, type WordBankItem } from '@/context/WordBankContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Bookmark } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { WordBankItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,

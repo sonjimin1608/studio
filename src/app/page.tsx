@@ -1,16 +1,15 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { analyzeSentenceAction, generateNewStoryAction } from './actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2, Plus, Trash2, Wand2, ChevronRight, BookOpen, ChevronLeft } from 'lucide-react';
 import { useWordBank } from '@/context/WordBankContext';
-import type { AnalyzeSentenceOutput } from '@/ai/flows/analyze-sentence';
+import type { AnalyzeSentenceOutput, VocabularyItem } from '@/ai/flows/analyze-sentence';
 import {
   Tooltip,
   TooltipContent,
@@ -41,20 +40,27 @@ interface Story {
   paragraphs: string[];
 }
 
-type VocabularyWord = AnalyzeSentenceOutput['vocabulary'][0];
+type SentenceAnalysis = {
+  sentence: string;
+  analysis: AnalyzeSentenceOutput | null;
+  isLoading: boolean;
+};
 
 export default function StoryPage() {
   const [story, setStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedSentence, setSelectedSentence] = useState<string | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<AnalyzeSentenceOutput | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
+  const [activeAnalysis, setActiveAnalysis] = useState<SentenceAnalysis | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
   const [topic, setTopic] = useState('');
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
   
   const { toast } = useToast();
   const { addWord, removeWord, isWordSaved, wordBank } = useWordBank();
+
+  const [paragraphAnalyses, setParagraphAnalyses] = useState<Record<number, SentenceAnalysis[]>>({});
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -79,53 +85,30 @@ export default function StoryPage() {
     }
   }, [story]);
 
-  const handleGenerateStory = async () => {
-    if (!topic.trim()) {
-      toast({ title: "오류", description: "이야기 주제를 입력해주세요.", variant: 'destructive' });
-      return;
-    }
-    
-    setIsGenerating(true);
-    const result = await generateNewStoryAction(topic);
-    
-    if (result.success && result.data?.paragraphs) {
-      const newStory: Story = { 
-        topic: topic, 
-        title: result.data.title,
-        paragraphs: result.data.paragraphs
-      };
-      setStory(newStory);
-      setCurrentParagraphIndex(0);
-      toast({ title: "성공", description: "새로운 이야기가 생성되었습니다!" });
-    } else {
-      toast({ title: "오류", description: result.error, variant: 'destructive' });
-    }
-    setIsGenerating(false);
-  };
-  
-  const handleSentenceClick = async (sentence: string) => {
-    setSelectedSentence(sentence);
-    setIsAnalyzing(true);
-    setAnalysisResult(null);
+  const analyzeAndCacheSentence = useCallback(async (sentence: string, paragraphIndex: number) => {
+    setParagraphAnalyses(prev => {
+        const para = prev[paragraphIndex] || [];
+        if (para.some(s => s.sentence === sentence && (s.analysis || s.isLoading))) {
+            return prev;
+        }
+        const newPara = para.map(s => s.sentence === sentence ? { ...s, isLoading: true } : s);
+        if (!newPara.some(s => s.sentence === sentence)) {
+            newPara.push({ sentence, analysis: null, isLoading: true });
+        }
+        return { ...prev, [paragraphIndex]: newPara };
+    });
+
     const result = await analyzeSentenceAction(sentence);
-    if (result.success && result.data) {
-      setAnalysisResult(result.data);
-    } else {
-      toast({ title: "분석 오류", description: result.error, variant: 'destructive' });
-      setSelectedSentence(null);
-    }
-    setIsAnalyzing(false);
-  };
 
-  const handleDeleteStory = () => {
-    setStory(null);
-    setTopic('');
-    setCurrentParagraphIndex(0);
-    localStorage.removeItem(STORY_STORAGE_KEY);
-    toast({ title: "삭제됨", description: "이야기를 삭제했습니다." });
-  }
+    setParagraphAnalyses(prev => {
+        const para = prev[paragraphIndex] || [];
+        const newPara = para.map(s => s.sentence === sentence ? { ...s, analysis: result.success ? result.data : null, isLoading: false } : s);
+        return { ...prev, [paragraphIndex]: newPara };
+    });
 
-  const handleToggleWord = (word: VocabularyWord) => {
+  }, []);
+
+  const handleToggleWord = (word: VocabularyItem) => {
     const wordInBank = isWordSaved(word.term);
     if (wordInBank) {
       removeWord(word.term);
@@ -143,6 +126,40 @@ export default function StoryPage() {
     if (!string) return '';
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
+
+  const handleGenerateStory = async () => {
+    if (!topic.trim()) {
+      toast({ title: "오류", description: "이야기 주제를 입력해주세요.", variant: 'destructive' });
+      return;
+    }
+    
+    setIsGenerating(true);
+    setParagraphAnalyses({});
+    const result = await generateNewStoryAction(topic);
+    
+    if (result.success && result.data?.paragraphs) {
+      const newStory: Story = { 
+        topic: topic, 
+        title: result.data.title,
+        paragraphs: result.data.paragraphs
+      };
+      setStory(newStory);
+      setCurrentParagraphIndex(0);
+      toast({ title: "성공", description: "새로운 이야기가 생성되었습니다!" });
+    } else {
+      toast({ title: "오류", description: result.error, variant: 'destructive' });
+    }
+    setIsGenerating(false);
+  };
+  
+  const handleDeleteStory = () => {
+    setStory(null);
+    setTopic('');
+    setCurrentParagraphIndex(0);
+    setParagraphAnalyses({});
+    localStorage.removeItem(STORY_STORAGE_KEY);
+    toast({ title: "삭제됨", description: "이야기를 삭제했습니다." });
+  }
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -212,56 +229,72 @@ export default function StoryPage() {
         </CardHeader>
         <CardContent className="text-lg leading-relaxed space-y-4 min-h-[200px]">
           <TooltipProvider>
-            <Sheet open={!!selectedSentence} onOpenChange={(isOpen) => !isOpen && setSelectedSentence(null)}>
-              <div>
-                <div className="mb-4">
-                  {sentences.map((sentence, sIndex) => (
-                    <SheetTrigger asChild key={sIndex}>
-                      <span
-                        onClick={() => handleSentenceClick(sentence)}
-                        className="cursor-pointer hover:bg-accent/50 p-1 rounded-md transition-colors"
-                      >
-                       {sentence}{' '}
-                      </span>
-                    </SheetTrigger>
-                  ))}
-                </div>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+              <div className="mb-4">
+                {sentences.map((sentence, sIndex) => {
+                  const sentenceAnalysis = paragraphAnalyses[currentParagraphIndex]?.find(p => p.sentence === sentence);
+                  return (
+                    <Tooltip key={sIndex} delayDuration={100}>
+                      <TooltipTrigger asChild>
+                        <span 
+                          onMouseEnter={() => analyzeAndCacheSentence(sentence, currentParagraphIndex)}
+                          className="cursor-pointer"
+                          onClick={() => {
+                            if (sentenceAnalysis && sentenceAnalysis.analysis) {
+                                setActiveAnalysis(sentenceAnalysis);
+                                setIsSheetOpen(true);
+                            }
+                          }}
+                        >
+                          {sentence}
+                          {' '}
+                        </span>
+                      </TooltipTrigger>
+                      {sentenceAnalysis?.analysis?.translation && (
+                        <TooltipContent>
+                          <p>{sentenceAnalysis.analysis.translation}</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  );
+                })}
               </div>
+
               <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
                 <SheetHeader>
                   <SheetTitle className="font-headline">문장 분석</SheetTitle>
                   <SheetDescription asChild>
-                    <div className="mt-2 p-3 bg-muted rounded-md text-sm">{selectedSentence}</div>
+                    <div className="mt-2 p-3 bg-muted rounded-md text-sm">{activeAnalysis?.sentence}</div>
                   </SheetDescription>
                 </SheetHeader>
                 <div className="py-4">
-                  {isAnalyzing ? (
+                  {activeAnalysis?.isLoading ? (
                     <div className="space-y-4">
                       <Skeleton className="h-8 w-1/3" />
                       <Skeleton className="h-16 w-full" />
                       <Skeleton className="h-8 w-1/3 mt-4" />
                       <Skeleton className="h-16 w-full" />
                     </div>
-                  ) : analysisResult ? (
+                  ) : activeAnalysis?.analysis ? (
                     <div className="space-y-6">
-                      {analysisResult.translation && (
+                       {activeAnalysis.analysis.translation && (
                         <div>
-                          <h3 className="font-semibold mb-2 text-lg font-headline">번역</h3>
-                          <p className="p-3 bg-secondary/50 rounded-md text-sm">{analysisResult.translation}</p>
+                            <h3 className="font-semibold mb-2 text-lg font-headline">번역</h3>
+                            <p className="p-3 bg-secondary/50 rounded-md">{activeAnalysis.analysis.translation}</p>
                         </div>
-                      )}
+                       )}
                       <div>
                         <h3 className="font-semibold mb-2 text-lg font-headline">어휘</h3>
                         <ul className="space-y-2">
-                          {analysisResult.vocabulary.map((item, index) => {
+                          {activeAnalysis.analysis.vocabulary.map((item: VocabularyItem, index: number) => {
                             const saved = isWordSaved(item.term);
-                            return (
+                             return (
                               <li key={index} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
                                 <div>
                                   <p className="font-semibold">{item.term} <span className="text-muted-foreground">({item.lemma})</span></p>
                                   <p className="text-sm text-muted-foreground">{item.pos}{item.gender && item.gender !== 'n/a' ? ` (${item.gender})` : ''} - {item.definition}</p>
                                 </div>
-                                 <Button
+                                <Button
                                   size="icon"
                                   variant="ghost"
                                   className="h-8 w-8 flex-shrink-0 ml-2"
@@ -274,11 +307,11 @@ export default function StoryPage() {
                           })}
                         </ul>
                       </div>
-                      {analysisResult.grammar && analysisResult.grammar.length > 0 && (
+                      {activeAnalysis.analysis.grammar && activeAnalysis.analysis.grammar.length > 0 && (
                         <div>
                           <h3 className="font-semibold mb-2 text-lg font-headline">주요 문법</h3>
                           <ul className="space-y-2">
-                            {analysisResult.grammar.map((item, index) => (
+                            {activeAnalysis.analysis.grammar.map((item: any, index: number) => (
                               <li key={index} className="p-3 bg-secondary/50 rounded-md">
                                 <p className="font-semibold">{item.topic}</p>
                                 <p className="text-sm text-muted-foreground">{item.explanation}</p>
@@ -288,7 +321,9 @@ export default function StoryPage() {
                         </div>
                       )}
                     </div>
-                  ) : null}
+                  ) : (
+                    activeAnalysis && <p className="text-center text-muted-foreground">분석 결과를 불러오는 데 실패했습니다.</p>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
@@ -313,7 +348,13 @@ export default function StoryPage() {
               </div>
 
               <Button 
-                onClick={() => setCurrentParagraphIndex(prev => prev + 1)} 
+                onClick={() => {
+                  if (!isLastParagraph) {
+                    setCurrentParagraphIndex(prev => prev + 1);
+                    setActiveAnalysis(null);
+                    setIsSheetOpen(false);
+                  }
+                }} 
                 disabled={isLastParagraph}
               >
                 다음
