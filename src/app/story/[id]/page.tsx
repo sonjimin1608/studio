@@ -23,8 +23,7 @@ import { notFound, useRouter } from 'next/navigation';
 const STORIES_STORAGE_KEY = 'novela-stories';
 
 
-function StoryComponent({ params }: { params: { id: string } }) {
-  const storyId = params.id;
+function StoryComponent({ storyId }: { storyId: string }) {
   const [story, setStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -275,7 +274,7 @@ function StoryComponent({ params }: { params: { id: string } }) {
 export default function StoryPage({ params }: { params: { id: string } }) {
   return (
     <WordBankProvider>
-      <StoryComponent params={params} />
+      <StoryComponent storyId={params.id} />
     </WordBankProvider>
   )
 }

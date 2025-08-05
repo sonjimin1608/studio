@@ -26,6 +26,7 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // storyId가 있을 때만 로컬 스토리지에서 데이터를 불러옵니다.
+    // storyId가 변경될 때마다 단어장을 다시 로드합니다.
     if (storyId) {
         try {
             const savedBank = localStorage.getItem(getStorageKey(storyId));
@@ -71,6 +72,7 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
 
 
   useEffect(() => {
+    // isLoaded 상태와 storyId를 확인하여 적절한 때에만 저장합니다.
     if (isLoaded && storyId) {
       try {
         localStorage.setItem(getStorageKey(storyId), JSON.stringify(wordBank));
@@ -89,13 +91,15 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
         });
         return;
     }
-    if (wordBank.some(i => i.term === item.term)) {
-      return;
-    }
-    setWordBank(prev => [item, ...prev]);
-    toast({
-      title: "단어장에 추가됨",
-      description: `"${item.term}"을(를) 단어장에 추가했습니다.`,
+    setWordBank(prev => {
+        if (prev.some(i => i.term === item.term)) {
+            return prev;
+        }
+        toast({
+            title: "단어장에 추가됨",
+            description: `"${item.term}"을(를) 단어장에 추가했습니다.`,
+        });
+        return [item, ...prev];
     });
   };
 
@@ -121,9 +125,13 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
         const storageKey = getStorageKey(ownerStoryId);
         const storedBank = localStorage.getItem(storageKey);
         if(storedBank) {
-          const bank: WordBankItem[] = JSON.parse(storedBank);
-          const updatedBank = bank.filter(item => item.id !== id);
-          localStorage.setItem(storageKey, JSON.stringify(updatedBank));
+          try {
+            const bank: WordBankItem[] = JSON.parse(storedBank);
+            const updatedBank = bank.filter(item => item.id !== id);
+            localStorage.setItem(storageKey, JSON.stringify(updatedBank));
+          } catch(e) {
+             console.error("단어장 삭제 중 오류 발생", e)
+          }
         }
       }
     }
