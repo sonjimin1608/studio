@@ -24,8 +24,15 @@ const VocabularyItemSchema = z.object({
   definition: z.string().describe('A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".'),
 });
 
+const GrammarItemSchema = z.object({
+  topic: z.string().describe('The name of the grammatical concept (e.g., "Preterite Tense", "Ser vs. Estar").'),
+  explanation: z.string().describe('A concise explanation of the grammatical rule in Korean, followed by the English explanation in parentheses.'),
+});
+
 const AnalyzeSentenceOutputSchema = z.object({
+  translation: z.string().describe('A natural translation of the sentence into Korean, followed by the English translation in parentheses. Example: "나는 스페인어를 합니다 (I speak Spanish)".'),
   vocabulary: z.array(VocabularyItemSchema).describe('List of all words with their definitions. Do not include proper nouns.'),
+  grammar: z.array(GrammarItemSchema).optional().describe('A list of key grammatical points found in the sentence. If no specific grammar points are noteworthy, this can be omitted.'),
 });
 export type AnalyzeSentenceOutput = z.infer<typeof AnalyzeSentenceOutputSchema>;
 
@@ -37,18 +44,23 @@ const prompt = ai.definePrompt({
   name: 'analyzeSentencePrompt',
   input: {schema: AnalyzeSentenceInputSchema},
   output: {schema: AnalyzeSentenceOutputSchema},
-  prompt: `You are a Spanish language expert. For each word in the following Spanish sentence, provide its lemma, part of speech, and definition in Korean and English.
+  prompt: `You are a Spanish language expert. Analyze the given Spanish sentence.
 
 Sentence: {{{sentence}}}
 
-For each word, provide:
-1.  **term**: The original word from the sentence.
-2.  **lemma**: The base form (dictionary form).
-3.  **pos**: The part of speech.
-4.  **gender**: For nouns, specify 'm' (masculine) or 'f' (feminine). Otherwise, 'n/a'.
-5.  **definition**: A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".
+Your analysis must include three parts:
+1.  **translation**: Provide a natural Korean translation, followed by the English translation in parentheses.
+2.  **vocabulary**: For each meaningful word (excluding proper nouns), provide its details:
+    - **term**: The original word from the sentence.
+    - **lemma**: The base (dictionary) form.
+    - **pos**: The part of speech.
+    - **gender**: For nouns, specify 'm' (masculine) or 'f' (feminine). Otherwise, 'n/a'.
+    - **definition**: A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".
+3.  **grammar**: Identify key grammatical concepts in the sentence. For each, provide:
+    - **topic**: The name of the concept.
+    - **explanation**: A concise explanation in Korean, followed by the English explanation in parentheses. If there are no noteworthy grammatical points, you can provide an empty array.
 
-Your output must be a JSON object matching the provided schema, containing a list of these vocabulary items. Do not analyze punctuation.`,
+Your output must be a JSON object matching the provided schema. Do not analyze punctuation.`,
 });
 
 const analyzeSentenceFlow = ai.defineFlow(

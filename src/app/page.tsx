@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { analyzeSentenceAction, generateNewStoryAction } from './actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +29,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-import type { WordBankItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
@@ -127,62 +126,18 @@ export default function StoryPage() {
   }
 
   const handleToggleWord = (word: VocabularyWord) => {
-    if (isWordSaved(word.term)) {
+    const wordInBank = isWordSaved(word.term);
+    if (wordInBank) {
       removeWord(word.term);
     } else {
       addWord({
         term: word.term,
         lemma: word.lemma,
-        definition: word.definition,
+        definition: `${word.pos}${word.gender && word.gender !== 'n/a' ? ` (${word.gender})` : ''} - ${word.definition}`,
         type: 'vocabulary'
       });
     }
   }
-  
-  const highlightWords = useCallback((text: string) => {
-    if (!wordBank || wordBank.length === 0) {
-      return text;
-    }
-  
-    const wordBankMap = new Map<string, WordBankItem>();
-    wordBank.forEach(item => {
-      // Use lemma for broader matching (e.g., 'soldado' matches 'soldados')
-      wordBankMap.set(item.lemma.toLowerCase(), item);
-    });
-  
-    const lemmas = Array.from(wordBankMap.keys()).sort((a, b) => b.length - a.length);
-    if (lemmas.length === 0) return text;
-    
-    const regex = new RegExp(`\\b(${lemmas.join('|')})[a-z]*\\b`, 'gi');
-  
-    const parts = text.split(regex);
-  
-    return parts.map((part, index) => {
-      if (index % 2 === 1) { // It's a matched part
-        const lowerPart = part.toLowerCase();
-        const matchedLemma = lemmas.find(lemma => lowerPart.startsWith(lemma));
-        const item = matchedLemma ? wordBankMap.get(matchedLemma) : undefined;
-        
-        if (item) {
-          return (
-            <Tooltip key={index}>
-              <TooltipTrigger asChild>
-                <span className="bg-red-300/50 dark:bg-red-800/50 rounded-md cursor-help">{part}</span>
-              </TooltipTrigger>
-              <TooltipContent className="flex flex-col gap-2 p-2 items-start">
-                <span>{item.definition}</span>
-                <Button variant="destructive" size="sm" className="h-auto px-2 py-1 text-xs" onClick={() => removeWord(item.term)}>
-                  단어장에서 삭제
-                </Button>
-              </TooltipContent>
-            </Tooltip>
-          );
-        }
-      }
-      return part;
-    });
-  }, [wordBank, removeWord]);
-
 
   const capitalizeFirstLetter = (string: string) => {
     if (!string) return '';
@@ -266,7 +221,7 @@ export default function StoryPage() {
                         onClick={() => handleSentenceClick(sentence)}
                         className="cursor-pointer hover:bg-accent/50 p-1 rounded-md transition-colors"
                       >
-                        {highlightWords(sentence)}{' '}
+                       {sentence}{' '}
                       </span>
                     </SheetTrigger>
                   ))}
@@ -289,6 +244,12 @@ export default function StoryPage() {
                     </div>
                   ) : analysisResult ? (
                     <div className="space-y-6">
+                      {analysisResult.translation && (
+                        <div>
+                          <h3 className="font-semibold mb-2 text-lg font-headline">번역</h3>
+                          <p className="p-3 bg-secondary/50 rounded-md text-sm">{analysisResult.translation}</p>
+                        </div>
+                      )}
                       <div>
                         <h3 className="font-semibold mb-2 text-lg font-headline">어휘</h3>
                         <ul className="space-y-2">
@@ -298,7 +259,7 @@ export default function StoryPage() {
                               <li key={index} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
                                 <div>
                                   <p className="font-semibold">{item.term} <span className="text-muted-foreground">({item.lemma})</span></p>
-                                  <p className="text-sm text-muted-foreground">{item.definition}</p>
+                                  <p className="text-sm text-muted-foreground">{item.pos}{item.gender && item.gender !== 'n/a' ? ` (${item.gender})` : ''} - {item.definition}</p>
                                 </div>
                                  <Button
                                   size="icon"
@@ -313,6 +274,19 @@ export default function StoryPage() {
                           })}
                         </ul>
                       </div>
+                      {analysisResult.grammar && analysisResult.grammar.length > 0 && (
+                        <div>
+                          <h3 className="font-semibold mb-2 text-lg font-headline">주요 문법</h3>
+                          <ul className="space-y-2">
+                            {analysisResult.grammar.map((item, index) => (
+                              <li key={index} className="p-3 bg-secondary/50 rounded-md">
+                                <p className="font-semibold">{item.topic}</p>
+                                <p className="text-sm text-muted-foreground">{item.explanation}</p>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   ) : null}
                 </div>
