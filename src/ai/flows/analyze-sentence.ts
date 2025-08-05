@@ -27,7 +27,7 @@ const VocabularyItemSchema = z.object({
 
 const GrammarItemSchema = z.object({
   topic: z.string().describe('The name of the grammatical concept (e.g., "Preterite Tense", "Ser vs. Estar").'),
-  explanation: z.string().describe('A concise explanation of the grammatical rule in Korean, followed by the English explanation in parentheses.'),
+  explanation: z.string().describe('A concise explanation of the grammatical rule in Korean.'),
 });
 
 const AnalyzeSentenceOutputSchema = z.object({
@@ -59,7 +59,7 @@ Your analysis must include three parts:
     - **definition**: A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".
 3.  **grammar**: Identify key grammatical concepts in the sentence. For each, provide:
     - **topic**: The name of the concept.
-    - **explanation**: A concise explanation in Korean, followed by the English explanation in parentheses. If there are no noteworthy grammatical points, you can provide an empty array.
+    - **explanation**: A concise explanation in Korean. If there are no noteworthy grammatical points, you can provide an empty array.
 
 Your output must be a JSON object matching the provided schema. Do not analyze punctuation.`,
 });
