@@ -202,17 +202,15 @@ export default function StoryPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="font-headline text-3xl">{capitalizeFirstLetter(story.title)}</CardTitle>
-              <CardDescription className="mt-1">주제: {capitalizeFirstLetter(story.topic)}</CardDescription>
-            </div>
-            <Button variant="destructive" size="icon" onClick={handleDeleteStory}>
-              <Trash2 className="h-4 w-4" />
-              <span className="sr-only">삭제</span>
-            </Button>
+        <CardHeader className="flex flex-row justify-between items-start">
+          <div className="flex-grow">
+            <CardTitle className="font-headline text-3xl mb-2">{capitalizeFirstLetter(story.title)}</CardTitle>
+            <p className="text-lg font-semibold text-foreground">주제: {capitalizeFirstLetter(story.topic)}</p>
           </div>
+          <Button variant="destructive" size="icon" onClick={handleDeleteStory} className="flex-shrink-0">
+            <Trash2 className="h-4 w-4" />
+            <span className="sr-only">삭제</span>
+          </Button>
         </CardHeader>
         <CardContent className="text-lg leading-relaxed space-y-4 min-h-[200px]">
           <TooltipProvider>
@@ -313,7 +311,7 @@ export default function StoryPage() {
             disabled={currentParagraphIndex === 0}
             variant="outline"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4 mr-2" />
             이전
           </Button>
 
@@ -323,8 +321,8 @@ export default function StoryPage() {
 
           {isLastParagraph ? (
             <Button onClick={handleContinueStory} disabled={isContinuing}>
-              {isContinuing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
-              이야기 이어하기
+              {isContinuing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : '이야기 이어하기'}
+              <ChevronRight className="h-4 w-4 ml-2" />
             </Button>
           ) : (
             <Button 
@@ -332,7 +330,7 @@ export default function StoryPage() {
               disabled={isLastParagraph}
             >
               다음
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4 ml-2" />
             </Button>
           )}
         </CardFooter>

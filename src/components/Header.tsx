@@ -16,19 +16,19 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
+      <div className="container flex h-16 items-center max-w-4xl mx-auto px-4">
         <div className="mr-4 flex items-center">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="h-6 w-6 text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="h-8 w-8 text-primary">
               <rect width="256" height="256" fill="none"></rect>
               <path d="M48,216a23.9,23.9,0,0,1,24-24H208V32H72A23.9,23.9,0,0,0,48,56Z" opacity="0.2" fill="currentColor"></path>
               <path d="M48,216a23.9,23.9,0,0,1,24-24H208V32H72a24,24,0,0,0-24,24V216" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"></path>
               <polyline points="208 64 72 64 72 40" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"></polyline>
             </svg>
-            <span className="font-bold font-headline text-lg">Ñovel</span>
+            <span className="font-bold font-headline text-2xl">Ñovel</span>
           </Link>
         </div>
-        <nav className="flex items-center space-x-2 sm:space-x-6 text-sm font-medium">
+        <nav className="flex items-center space-x-2 sm:space-x-4 text-sm font-medium ml-auto">
           {navLinks.map((link) => {
             const isActive = (pathname === '/' && link.href === '/') || (link.href !== '/' && pathname.startsWith(link.href));
             return (
