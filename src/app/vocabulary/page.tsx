@@ -61,7 +61,7 @@ export default function VocabularyPage() {
       {items.map((item) => (
         <Card 
           key={item.lemma} 
-          className="flex flex-col relative"
+          className="flex flex-col relative group"
           onMouseEnter={() => setActiveCardLemma(item.lemma)}
           onMouseLeave={handleMouseLeave}
           onTouchStart={() => handleTouchStart(item.lemma)}
@@ -137,19 +137,13 @@ export default function VocabularyPage() {
           <TabsTrigger value="grammar">문법 ({grammar.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="all" className="mt-6">
-          <div className="group">
-            <WordList items={wordBank} />
-          </div>
+          <WordList items={wordBank} />
         </TabsContent>
         <TabsContent value="vocabulary" className="mt-6">
-          <div className="group">
           {vocabulary.length > 0 ? <WordList items={vocabulary} /> : <p className="text-center text-muted-foreground py-10">저장된 어휘가 없습니다.</p>}
-          </div>
         </TabsContent>
         <TabsContent value="grammar" className="mt-6">
-          <div className="group">
           {grammar.length > 0 ? <WordList items={grammar} /> : <p className="text-center text-muted-foreground py-10">저장된 문법이 없습니다.</p>}
-          </div>
         </TabsContent>
       </Tabs>
     </div>
