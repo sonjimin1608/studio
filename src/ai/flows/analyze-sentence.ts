@@ -21,22 +21,11 @@ const VocabularyItemSchema = z.object({
   lemma: z.string().describe('The base form (lemma) of the word. For verbs, this is the infinitive (e.g., "hablar"). For nouns, the singular form (e.g., "soldado").'),
   pos: z.string().describe('The part of speech (e.g., Noun, Verb, Adjective).'),
   gender: z.enum(['m', 'f', 'n/a']).optional().describe("The grammatical gender of the noun, if applicable. Use 'm' for masculine, 'f' for feminine."),
-  definition: z.string().describe('The definition of the word in Korean and English. Format: "한국어 뜻 (English meaning)".'),
+  definition: z.string().describe('A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".'),
 });
 
 const AnalyzeSentenceOutputSchema = z.object({
-  translation: z.string().describe('The Korean and English translation of the sentence, formatted as "Korean (English)".'),
-  grammar: z
-    .array(
-      z.object({
-        term: z.string().describe('The name of the grammatical rule, in Korean.'),
-        definition: z.string().describe('The explanation of the grammatical rule in Korean.'),
-      })
-    )
-    .describe('List of grammatical rules found in the sentence.'),
-  vocabulary: z
-    .array(VocabularyItemSchema)
-    .describe('List of all nouns, verbs, adjectives, adverbs, and prepositions with their definitions. Do not include proper nouns.'),
+  vocabulary: z.array(VocabularyItemSchema).describe('List of all words with their definitions. Do not include proper nouns.'),
 });
 export type AnalyzeSentenceOutput = z.infer<typeof AnalyzeSentenceOutputSchema>;
 
@@ -48,20 +37,18 @@ const prompt = ai.definePrompt({
   name: 'analyzeSentencePrompt',
   input: {schema: AnalyzeSentenceInputSchema},
   output: {schema: AnalyzeSentenceOutputSchema},
-  prompt: `You are a Spanish language expert. Analyze the following Spanish sentence. Do not include proper nouns in the vocabulary list.
+  prompt: `You are a Spanish language expert. For each word in the following Spanish sentence, provide its lemma, part of speech, and definition in Korean and English.
 
 Sentence: {{{sentence}}}
 
-1.  **Translation**: Translate the sentence in two steps. First, translate the original Spanish sentence into natural, idiomatic English (not a literal translation). Then, translate that English sentence into Korean. Provide the final translation in the format: "The actual Korean translation (The actual English Translation)".
-2.  **Grammar**: Identify key grammatical structures or rules used in the sentence (e.g., Subjunctive mood, Interrogative sentence, Conditional tense). Do not just list parts of speech. For each rule, provide the name of the rule ('term') and a brief explanation ('definition'), **both in Korean only**.
-3.  **Vocabulary**: Identify **all nouns, verbs, adjectives, adverbs, and prepositions** from the sentence, excluding proper nouns. For each word:
-    *   **term**: Provide the original Spanish word as it appears in the sentence.
-    *   **lemma**: Provide the dictionary form (lemma) of the word. For verbs, this is the infinitive (e.g., for "hablo", the lemma is "hablar"). For nouns, it's the singular form (e.g., for "soldados", the lemma is "soldado"). For adjectives with gender, show both forms using a slash (e.g., "bonito/a").
-    *   **pos**: The part of speech.
-    *   **gender**: For nouns, specify the gender: 'm' for masculine, 'f' for feminine. Otherwise, 'n/a'.
-    *   **definition**: Provide its definition in Korean and English. The format must be "한국어 뜻 (English meaning)".
+For each word, provide:
+1.  **term**: The original word from the sentence.
+2.  **lemma**: The base form (dictionary form).
+3.  **pos**: The part of speech.
+4.  **gender**: For nouns, specify 'm' (masculine) or 'f' (feminine). Otherwise, 'n/a'.
+5.  **definition**: A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".
 
-Your output must be a JSON object matching the provided schema.`,
+Your output must be a JSON object matching the provided schema, containing a list of these vocabulary items. Do not analyze punctuation.`,
 });
 
 const analyzeSentenceFlow = ai.defineFlow(
