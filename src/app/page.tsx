@@ -129,8 +129,8 @@ export default function StoryPage() {
   }
 
   const handleToggleWord = (word: VocabularyWord) => {
-    if (isWordSaved(word.lemma)) {
-      removeWord(word.lemma);
+    if (isWordSaved(word.term)) {
+      removeWord(word.term);
     } else {
       addWord({
         term: word.term,
@@ -161,15 +161,13 @@ export default function StoryPage() {
   
     const wordBankMap = new Map<string, WordBankItem>();
     wordBank.forEach(item => {
+      // Use lemma for broader matching (e.g., 'soldado' matches 'soldados')
       wordBankMap.set(item.lemma.toLowerCase(), item);
     });
   
-    // Create a regex from word bank lemmas. Match whole words only.
-    // The regex should handle variations (e.g., "soldado" should match "soldados").
-    // A simple way is to match word stems. For Spanish, this can be tricky.
-    // A more robust approach would be needed for perfect stemming, but for many cases,
-    // just checking if a word *starts with* a lemma can work reasonably well.
     const lemmas = Array.from(wordBankMap.keys()).sort((a, b) => b.length - a.length);
+    if (lemmas.length === 0) return text;
+    
     const regex = new RegExp(`\\b(${lemmas.join('|')})[a-z]*\\b`, 'gi');
   
     const parts = text.split(regex);
@@ -188,7 +186,7 @@ export default function StoryPage() {
               </TooltipTrigger>
               <TooltipContent className="flex flex-col gap-2 p-2 items-start">
                 <span>{item.definition}</span>
-                <Button variant="destructive" size="sm" className="h-auto px-2 py-1 text-xs" onClick={() => removeWord(item.lemma)}>
+                <Button variant="destructive" size="sm" className="h-auto px-2 py-1 text-xs" onClick={() => removeWord(item.term)}>
                   단어장에서 삭제
                 </Button>
               </TooltipContent>
@@ -338,11 +336,11 @@ export default function StoryPage() {
                         <h3 className="font-semibold mb-2 text-lg font-headline">어휘</h3>
                         <ul className="space-y-2">
                           {analysisResult.vocabulary.map((item, index) => {
-                            const saved = isWordSaved(item.lemma);
+                            const saved = isWordSaved(item.term);
                             return (
                               <li key={index} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
                                 <div>
-                                  <p className="font-semibold">{item.lemma}</p>
+                                  <p className="font-semibold">{item.term} <span className="text-muted-foreground">({item.lemma})</span></p>
                                   <p className="text-sm text-muted-foreground">{item.definition}</p>
                                 </div>
                                  <Button

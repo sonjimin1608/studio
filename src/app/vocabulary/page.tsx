@@ -24,15 +24,15 @@ import {
 
 export default function VocabularyPage() {
   const { wordBank, removeWord, clearWordBank } = useWordBank();
-  const [activeCardLemma, setActiveCardLemma] = useState<string | null>(null);
+  const [activeCardTerm, setActiveCardTerm] = useState<string | null>(null);
   const touchTimer = useRef<NodeJS.Timeout | null>(null);
 
   const vocabulary = wordBank.filter(item => item.type === 'vocabulary');
   const grammar = wordBank.filter(item => item.type === 'grammar');
 
-  const handleTouchStart = (lemma: string) => {
+  const handleTouchStart = (term: string) => {
     touchTimer.current = setTimeout(() => {
-      setActiveCardLemma(lemma);
+      setActiveCardTerm(term);
     }, 500); // 500ms for long press
   };
 
@@ -43,7 +43,7 @@ export default function VocabularyPage() {
   };
   
   const handleMouseLeave = () => {
-    setActiveCardLemma(null);
+    setActiveCardTerm(null);
   }
 
   if (wordBank.length === 0) {
@@ -60,11 +60,11 @@ export default function VocabularyPage() {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {items.map((item) => (
         <Card 
-          key={item.lemma} 
+          key={item.term} 
           className="flex flex-col relative group"
-          onMouseEnter={() => setActiveCardLemma(item.lemma)}
+          onMouseEnter={() => setActiveCardTerm(item.term)}
           onMouseLeave={handleMouseLeave}
-          onTouchStart={() => handleTouchStart(item.lemma)}
+          onTouchStart={() => handleTouchStart(item.term)}
           onTouchEnd={handleTouchEnd}
           onTouchMove={handleTouchEnd}
           onContextMenu={(e) => e.preventDefault()} // Prevent context menu on long press
@@ -72,7 +72,7 @@ export default function VocabularyPage() {
           <CardHeader>
             <div className="flex justify-between items-start gap-2">
               <div>
-                <CardTitle className="text-xl">{item.lemma}</CardTitle>
+                <CardTitle className="text-xl">{item.term}</CardTitle>
                 <Badge variant={item.type === 'grammar' ? 'secondary' : 'outline'} className="mt-2">
                   {item.type === 'grammar' ? '문법' : '어휘'}
                 </Badge>
@@ -87,11 +87,11 @@ export default function VocabularyPage() {
             size="icon" 
             className={cn(
               "absolute top-2 right-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity",
-              { "opacity-100": activeCardLemma === item.lemma }
+              { "opacity-100": activeCardTerm === item.term }
             )}
             onClick={(e) => {
               e.stopPropagation();
-              removeWord(item.lemma);
+              removeWord(item.term);
             }}
           >
             <Trash2 className="h-4 w-4" />

@@ -8,8 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 interface WordBankContextType {
   wordBank: WordBankItem[];
   addWord: (item: Omit<WordBankItem, 'id'>) => void;
-  removeWord: (lemma: string) => void;
-  isWordSaved: (lemma: string) => boolean;
+  removeWord: (term: string) => void;
+  isWordSaved: (term: string) => boolean;
   clearWordBank: () => void;
 }
 
@@ -42,26 +42,25 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
 
   const addWord = useCallback((item: Omit<WordBankItem, 'id'>) => {
     setWordBank(prev => {
-      if (prev.some(i => i.lemma === item.lemma)) {
+      if (prev.some(i => i.term === item.term)) {
         return prev;
       }
-      toast({
-        title: "단어장에 추가됨",
-        description: `"${item.lemma}"을(를) 단어장에 추가했습니다.`,
-      });
-      const newItem = { ...item, id: `${Date.now()}-${item.lemma}` };
+      const newItem = { ...item, id: `${Date.now()}-${item.term}` };
       return [newItem, ...prev];
     });
+     toast({
+        title: "단어장에 추가됨",
+        description: `"${item.term}"을(를) 단어장에 추가했습니다.`,
+      });
   }, [toast]);
 
-  const removeWord = useCallback((lemma: string) => {
+  const removeWord = useCallback((term: string) => {
     setWordBank(prev => {
-      const itemExists = prev.some(item => item.lemma === lemma);
-      const newBank = prev.filter(item => item.lemma !== lemma);
-      if (itemExists) {
-        toast({
+      const newBank = prev.filter(item => item.term !== term);
+       if (newBank.length < prev.length) {
+         toast({
           title: "단어장에서 삭제됨",
-          description: `"${lemma}"을(를) 단어장에서 삭제했습니다.`,
+          description: `"${term}"을(를) 단어장에서 삭제했습니다.`,
           variant: "destructive",
         });
       }
@@ -69,8 +68,8 @@ export const WordBankProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [toast]);
 
-  const isWordSaved = useCallback((lemma: string) => {
-    return wordBank.some(item => item.lemma === lemma);
+  const isWordSaved = useCallback((term: string) => {
+    return wordBank.some(item => item.term === term);
   }, [wordBank]);
 
   const clearWordBank = useCallback(() => {

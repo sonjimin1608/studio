@@ -33,10 +33,10 @@ const AnalyzeSentenceOutputSchema = z.object({
         lemma: z.string().describe('The base form (lemma) of the word. For verbs, this is the infinitive (e.g., "hablar"). For nouns, the singular form (e.g., "soldado").'),
         definition: z
           .string()
-          .describe('The definition of the word in Korean and English, formatted as "Korean (English)".'),
+          .describe('The definition of the word in Korean and English. For nouns, specify if it is masculine (남성) or feminine (여성). Format: "한국어 뜻 (English meaning) [성별]".'),
       })
     )
-    .describe('List of all nouns, verbs, adjectives, adverbs, and prepositions with their definitions in Korean and English. Do not include proper nouns.'),
+    .describe('List of all nouns, verbs, adjectives, adverbs, and prepositions with their definitions. Do not include proper nouns.'),
 });
 export type AnalyzeSentenceOutput = z.infer<typeof AnalyzeSentenceOutputSchema>;
 
@@ -57,7 +57,7 @@ Sentence: {{{sentence}}}
 3.  **Vocabulary**: Identify **all nouns, verbs, adjectives, adverbs, and prepositions** from the sentence, excluding proper nouns. For each word:
     *   **term**: Provide the original Spanish word as it appears in the sentence.
     *   **lemma**: Provide the dictionary form (lemma) of the word. For verbs, this is the infinitive (e.g., for "hablo", the lemma is "hablar"). For nouns, it's the singular form (e.g., for "soldados", the lemma is "soldado"). For adjectives with gender, show both forms using a slash (e.g., "bonito/a").
-    *   **definition**: Provide its definition in both Korean and English. The definition format must be "한국어 뜻 (English meaning)". Ensure the definition is general and not overly specific to the sentence's context (e.g., for "joven", use "젊은 (young)", not "젊은 남자 (young man)").
+    *   **definition**: Provide its definition in Korean and English. For nouns, **you must specify whether it is masculine (남성) or feminine (여성)**. The definition format must be "한국어 뜻 (English meaning) [성별]". For example, for "soldado", the definition should be "군인 (soldier) [남성]". For words that are not nouns, do not include gender.
 
 Your output must be a JSON object matching the provided schema.`,
 });
