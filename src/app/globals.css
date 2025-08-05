@@ -6,41 +6,27 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-#background-image {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-image: url('https://images.unsplash.com/photo-1543783284-562d4b2e8a7e?q=80&w=2942&auto=format&fit=crop');
-  background-size: cover;
-  background-position: center;
-  opacity: 0.1;
-  z-index: -1;
-}
-
-
 @layer base {
   :root {
-    --background: 30 100% 98%; /* A very light, almost white beige */
-    --foreground: 15 25% 10%;
-    --card: 30 50% 100%;
-    --card-foreground: 20 14.3% 4.1%;
-    --popover: 30 50% 100%;
-    --popover-foreground: 20 14.3% 4.1%;
-    --primary: 0 84% 60%; /* A strong, passionate red */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 30 40% 94%;
-    --secondary-foreground: 24 9.8% 10%;
-    --muted: 30 40% 94%;
-    --muted-foreground: 25 5.3% 44.7%;
-    --accent: 30 95% 55%; /* A vibrant Spanish orange */
-    --accent-foreground: 24 9.8% 10%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 0 72% 51%; /* Soft Red */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 30 95% 85%; /* Soft Orange */
+    --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 30 30% 89%;
-    --input: 30 30% 89%;
-    --ring: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -95,7 +81,6 @@ body {
     @apply border-border;
   }
   body {
-    /* @apply bg-background text-foreground; */
-    @apply text-foreground;
+    @apply bg-background text-foreground;
   }
 }
