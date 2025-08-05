@@ -37,8 +37,11 @@ Your task is to write a complete short story based on the given topic.
 
 The overall topic of the story is: {{topic}}
 
+**Instructions:**
 1.  **Title**: Generate a creative, short, and fitting title for the story in Spanish.
 2.  **Story**: Write a complete story consisting of approximately 25 paragraphs. Each paragraph must be between 5 and 7 sentences long.
+    - **Consistent Point of View**: The story must be written in a consistent third-person point of view. Do not switch to first-person ("I", "we").
+    - **Dialogue**: Enclose all character dialogue in double quotation marks (e.g., "Hola, ¿cómo estás?").
     - The story must be engaging and use a variety of vocabulary and grammatical structures suitable for learners.
     - Ensure the story has a clear beginning, middle, and end.
     - Return the paragraphs as an array of strings.
