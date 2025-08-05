@@ -52,7 +52,7 @@ const prompt = ai.definePrompt({
 
 Sentence: {{{sentence}}}
 
-1.  **Translation**: Translate the sentence in two steps. First, translate the original Spanish sentence into natural, idiomatic English (not a literal translation). Then, translate that English sentence into Korean. The final output format must be "한국어 번역 (English Translation)".
+1.  **Translation**: Translate the sentence in two steps. First, translate the original Spanish sentence into natural, idiomatic English (not a literal translation). Then, translate that English sentence into Korean. Provide the final translation in the format: "The actual Korean translation (The actual English Translation)".
 2.  **Grammar**: Identify key grammatical structures or rules used in the sentence (e.g., Subjunctive mood, Interrogative sentence, Conditional tense). Do not just list parts of speech. For each rule, provide the name of the rule ('term') and a brief explanation ('definition'), **both in Korean only**.
 3.  **Vocabulary**: Identify **all nouns, verbs, adjectives, adverbs, and prepositions** from the sentence, excluding proper nouns. For each word:
     *   **term**: Provide the original Spanish word as it appears in the sentence.
