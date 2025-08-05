@@ -31,6 +31,7 @@ import {
 import type { WordBankItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 
 const STORY_STORAGE_KEY = 'novela-story';
 
@@ -210,6 +211,7 @@ export default function StoryPage() {
   const currentParagraph = story.paragraphs[currentParagraphIndex];
   const sentences = currentParagraph.split(/(?<=[.?!])\s+/).filter(s => s.trim() !== '');
   const isLastParagraph = currentParagraphIndex === story.paragraphs.length - 1;
+  const progressValue = ((currentParagraphIndex + 1) / story.paragraphs.length) * 100;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -333,34 +335,39 @@ export default function StoryPage() {
             </Sheet>
           </TooltipProvider>
         </CardContent>
-        <CardFooter className="flex justify-between items-center">
-          <Button 
-            onClick={() => setCurrentParagraphIndex(prev => prev - 1)} 
-            disabled={currentParagraphIndex === 0}
-            variant="outline"
-          >
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            이전
-          </Button>
+        <CardFooter className="flex flex-col gap-4">
+           <div className="w-full">
+            <Progress value={progressValue} className="w-full" />
+           </div>
+           <div className="flex justify-between items-center w-full">
+              <Button 
+                onClick={() => setCurrentParagraphIndex(prev => prev - 1)} 
+                disabled={currentParagraphIndex === 0}
+                variant="outline"
+              >
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                이전
+              </Button>
 
-          <div className="text-sm text-muted-foreground">
-            {currentParagraphIndex + 1} / {story.paragraphs.length}
-          </div>
+              <div className="text-sm text-muted-foreground">
+                {currentParagraphIndex + 1} / {story.paragraphs.length}
+              </div>
 
-          {isLastParagraph ? (
-            <Button onClick={handleContinueStory} disabled={isContinuing}>
-              {isContinuing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : '이야기 이어하기'}
-              <ChevronRight className="h-4 w-4 ml-2" />
-            </Button>
-          ) : (
-            <Button 
-              onClick={() => setCurrentParagraphIndex(prev => prev + 1)} 
-              disabled={isLastParagraph}
-            >
-              다음
-              <ChevronRight className="h-4 w-4 ml-2" />
-            </Button>
-          )}
+              {isLastParagraph ? (
+                <Button onClick={handleContinueStory} disabled={isContinuing}>
+                  {isContinuing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : '이야기 이어하기'}
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              ) : (
+                <Button 
+                  onClick={() => setCurrentParagraphIndex(prev => prev + 1)} 
+                  disabled={isLastParagraph}
+                >
+                  다음
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              )}
+           </div>
         </CardFooter>
       </Card>
     </div>
