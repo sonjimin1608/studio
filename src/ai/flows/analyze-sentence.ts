@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -20,7 +21,7 @@ const VocabularyItemSchema = z.object({
   term: z.string().describe('The original vocabulary word as it appears in the sentence (e.g., "hablo", "soldados").'),
   lemma: z.string().describe('The base form (lemma) of the word. For verbs, this is the infinitive (e.g., "hablar"). For nouns, the singular form (e.g., "soldado").'),
   pos: z.string().describe('The part of speech (e.g., Noun, Verb, Adjective).'),
-  gender: z.enum(['m', 'f', 'n/a']).optional().describe("The grammatical gender of the noun, if applicable. Use 'm' for masculine, 'f' for feminine."),
+  gender: z.enum(['m', 'f', 'n/a']).optional().describe("The grammatical gender. Use 'm' for masculine nouns, 'f' for feminine nouns. For adjectives that don't change for gender, use 'n/a'. For other parts of speech, use 'n/a'."),
   definition: z.string().describe('A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".'),
 });
 
@@ -54,7 +55,7 @@ Your analysis must include three parts:
     - **term**: The original word from the sentence.
     - **lemma**: The base (dictionary) form.
     - **pos**: The part of speech.
-    - **gender**: For nouns, specify 'm' (masculine) or 'f' (feminine). Otherwise, 'n/a'.
+    - **gender**: For nouns, specify 'm' (masculine) or 'f' (feminine). For adjectives that have the same form for both genders (e.g., 'interesante'), use 'n/a'. For all other parts of speech, use 'n/a'.
     - **definition**: A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".
 3.  **grammar**: Identify key grammatical concepts in the sentence. For each, provide:
     - **topic**: The name of the concept.
