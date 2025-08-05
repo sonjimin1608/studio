@@ -43,8 +43,6 @@ interface Story {
 }
 
 type VocabularyWord = AnalyzeSentenceOutput['vocabulary'][0];
-type GrammarItem = AnalyzeSentenceOutput['grammar'][0];
-
 
 export default function StoryPage() {
   const [story, setStory] = useState<Story | null>(null);
@@ -137,19 +135,6 @@ export default function StoryPage() {
         lemma: word.lemma,
         definition: word.definition,
         type: 'vocabulary'
-      });
-    }
-  }
-
-  const handleToggleGrammar = (grammarItem: GrammarItem) => {
-     if (isWordSaved(grammarItem.term)) {
-      removeWord(grammarItem.term);
-    } else {
-      addWord({
-        term: grammarItem.term,
-        lemma: grammarItem.term, // Grammar uses term as lemma
-        definition: grammarItem.definition,
-        type: 'grammar'
       });
     }
   }
@@ -304,34 +289,6 @@ export default function StoryPage() {
                     </div>
                   ) : analysisResult ? (
                     <div className="space-y-6">
-                       <div>
-                        <h3 className="font-semibold mb-2 text-lg font-headline">번역</h3>
-                         <p className="p-3 bg-secondary/50 rounded-md text-sm">{analysisResult.translation}</p>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold mb-2 text-lg font-headline">주요 문법</h3>
-                        <ul className="space-y-2">
-                          {analysisResult.grammar.map((item, index) => {
-                            const saved = isWordSaved(item.term);
-                            return (
-                              <li key={index} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
-                                <div>
-                                  <p className="font-semibold">{item.term}</p>
-                                  <p className="text-sm text-muted-foreground">{item.definition}</p>
-                                </div>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8 flex-shrink-0 ml-2"
-                                  onClick={() => handleToggleGrammar(item)}
-                                >
-                                  {saved ? <Trash2 className="h-4 w-4 text-destructive" /> : <Plus className="h-4 w-4" />}
-                                </Button>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
                       <div>
                         <h3 className="font-semibold mb-2 text-lg font-headline">어휘</h3>
                         <ul className="space-y-2">
