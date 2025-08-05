@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { BrainCircuit, BookCopy, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
+import { WordBankProvider } from '@/context/WordBankContext';
+
 
 interface QuizQuestion {
   question: string;
@@ -16,7 +18,7 @@ interface QuizQuestion {
 
 const MIN_WORDS_FOR_QUIZ = 4;
 
-export default function QuizPage() {
+function QuizComponent() {
   const { wordBank } = useWordBank();
   const [quizState, setQuizState] = useState<'idle' | 'running' | 'finished'>('idle');
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -164,4 +166,12 @@ export default function QuizPage() {
       </Card>
     </div>
   );
+}
+
+export default function QuizPage() {
+    return (
+        <WordBankProvider>
+            <QuizComponent />
+        </WordBankProvider>
+    )
 }

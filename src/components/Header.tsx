@@ -6,7 +6,7 @@ import { BookOpenText, Bookmark, BrainCircuit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
-  { href: '/', label: '오늘의 이야기', icon: BookOpenText },
+  { href: '/', label: '나의 이야기', icon: BookOpenText },
   { href: '/vocabulary', label: '나의 단어장', icon: Bookmark },
   { href: '/quiz', label: '퀴즈', icon: BrainCircuit },
 ];
@@ -29,21 +29,24 @@ export default function Header() {
           </Link>
         </div>
         <nav className="flex items-center space-x-2 sm:space-x-6 text-sm font-medium">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                'transition-colors hover:text-primary p-2 rounded-md',
-                pathname === link.href ? 'text-primary bg-accent/50' : 'text-muted-foreground'
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <link.icon className="h-5 w-5" />
-                <span className='hidden sm:inline'>{link.label}</span>
-              </div>
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = (pathname === '/' && link.href === '/') || (link.href !== '/' && pathname.startsWith(link.href));
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  'transition-colors hover:text-primary p-2 rounded-md',
+                   isActive ? 'text-primary bg-accent/50' : 'text-muted-foreground'
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <link.icon className="h-5 w-5" />
+                  <span className='hidden sm:inline'>{link.label}</span>
+                </div>
+              </Link>
+            )
+          })}
         </nav>
       </div>
     </header>

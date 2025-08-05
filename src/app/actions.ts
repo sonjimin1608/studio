@@ -1,12 +1,14 @@
 'use server';
 import { generateSpanishStoryParagraph } from '@/ai/flows/generate-spanish-story';
 import { analyzeSentence } from '@/ai/flows/analyze-sentence';
-import type { GenerateSpanishStoryParagraphInput, GenerateSpanishStoryParagraphOutput } from '@/ai/flows/generate-spanish-story';
+import type { GenerateSpanishStoryParagraphOutput } from '@/ai/flows/generate-spanish-story';
 import type { AnalyzeSentenceOutput } from '@/ai/flows/analyze-sentence';
+import { redirect } from 'next/navigation';
+import type { Story } from '@/lib/types';
 
 type GenerateStoryResult = {
   success: true;
-  data: GenerateSpanishStoryParagraphOutput['paragraph'];
+  data: Story;
 } | {
   success: false;
   error: string;
@@ -20,15 +22,37 @@ type AnalyzeSentenceResult = {
   error: string;
 }
 
-export async function generateStoryParagraphAction(input: GenerateSpanishStoryParagraphInput): Promise<GenerateStoryResult> {
+export async function generateNewStoryAction(topic: string): Promise<GenerateStoryResult> {
   try {
-    const result = await generateSpanishStoryParagraph(input);
-    return { success: true, data: result.paragraph };
+    const result = await generateSpanishStoryParagraph({ topic, previousContext: '' });
+    if (!result.paragraph) {
+      throw new Error('Failed to generate the first paragraph.');
+    }
+    const newStory: Story = {
+      id: new Date().toISOString(),
+      topic: topic,
+      lessons: [result.paragraph],
+      createdAt: new Date().toISOString(),
+      currentDay: 0,
+    };
+    return { success: true, data: newStory };
   } catch (error) {
-    console.error('Error generating story paragraph:', error);
-    return { success: false, error: '이야기 단락 생성에 실패했습니다. 다시 시도해주세요.' };
+    console.error('Error generating new story:', error);
+    return { success: false, error: '새로운 이야기 생성에 실패했습니다. 다시 시도해주세요.' };
   }
 }
+
+export async function continueStoryAction(story: Story): Promise<string | null> {
+    try {
+        const previousContext = story.lessons.join('\n\n');
+        const result = await generateSpanishStoryParagraph({ topic: story.topic, previousContext });
+        return result.paragraph;
+    } catch (error) {
+        console.error('Error continuing story:', error);
+        return null;
+    }
+}
+
 
 export async function analyzeSentenceAction(sentence: string): Promise<AnalyzeSentenceResult> {
   try {
