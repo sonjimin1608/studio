@@ -16,6 +16,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 import type { WordBankItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -205,12 +217,28 @@ export default function StoryPage() {
         <CardHeader className="flex flex-row justify-between items-start">
           <div className="flex-grow">
             <CardTitle className="font-headline text-3xl mb-2">{capitalizeFirstLetter(story.title)}</CardTitle>
-            <p className="text-lg font-semibold text-foreground">주제: {capitalizeFirstLetter(story.topic)}</p>
+            <CardDescription className="text-lg font-semibold text-foreground">주제: {capitalizeFirstLetter(story.topic)}</CardDescription>
           </div>
-          <Button variant="destructive" size="icon" onClick={handleDeleteStory} className="flex-shrink-0">
-            <Trash2 className="h-4 w-4" />
-            <span className="sr-only">삭제</span>
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="icon" className="flex-shrink-0">
+                <Trash2 className="h-4 w-4" />
+                <span className="sr-only">삭제</span>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>정말로 삭제하시겠습니까?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  이 작업은 되돌릴 수 없습니다. 현재 이야기가 영구적으로 삭제됩니다.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>취소</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteStory}>삭제</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardHeader>
         <CardContent className="text-lg leading-relaxed space-y-4 min-h-[200px]">
           <TooltipProvider>
