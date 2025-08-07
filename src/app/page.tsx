@@ -27,6 +27,8 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 
 const STORY_STORAGE_KEY = 'novela-story';
+const API_KEY_STORAGE_KEY = 'novela-api-key';
+
 
 interface Story {
   topic: string;
@@ -49,6 +51,7 @@ export default function StoryPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const [topic, setTopic] = useState('');
+  const [apiKey, setApiKey] = useState('');
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
 
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -68,8 +71,12 @@ export default function StoryPage() {
           setStory(savedStory);
           setCurrentParagraphIndex(0);
         }
+        const savedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+        if (savedApiKey) {
+          setApiKey(savedApiKey);
+        }
       } catch (error) {
-        console.error("이야기를 불러오는 데 실패했습니다.", error);
+        console.error("이야기나 API 키를 불러오는 데 실패했습니다.", error);
       } finally {
         setIsLoading(false);
       }
@@ -87,8 +94,20 @@ export default function StoryPage() {
       localStorage.setItem(STORY_STORAGE_KEY, JSON.stringify(story));
     }
   }, [story]);
+  
+  useEffect(() => {
+    if (apiKey) {
+      localStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
+    }
+  }, [apiKey]);
+
 
   const analyzeAndCacheSentence = useCallback(async (sentence: string, paragraphIndex: number): Promise<SentenceAnalysis> => {
+    if (!apiKey) {
+      toast({ title: "오류", description: "API 키를 먼저 입력해주세요.", variant: 'destructive' });
+      return { sentence, analysis: null, isLoading: false };
+    }
+  
     const cachedAnalysis = paragraphAnalyses[paragraphIndex]?.find(p => p.sentence === sentence);
     if (cachedAnalysis && (cachedAnalysis.analysis || cachedAnalysis.isLoading)) {
       return cachedAnalysis;
@@ -107,13 +126,17 @@ export default function StoryPage() {
     setActiveAnalysis(analysisState);
     setIsSheetOpen(true);
 
-    const result = await analyzeSentenceAction(sentence);
+    const result = await analyzeSentenceAction({ sentence, apiKey });
     
     const finalAnalysis: SentenceAnalysis = { 
         ...analysisState, 
         analysis: result.success ? result.data : null, 
         isLoading: false 
     };
+    
+    if(!result.success){
+        toast({ title: "오류", description: result.error, variant: 'destructive' });
+    }
 
     setParagraphAnalyses(prev => {
         const para = prev[paragraphIndex] || [];
@@ -123,7 +146,7 @@ export default function StoryPage() {
 
     setActiveAnalysis(finalAnalysis);
     return finalAnalysis;
-  }, [paragraphAnalyses]);
+  }, [paragraphAnalyses, apiKey, toast]);
 
 
   const handleSentenceClick = async (sentence: string, paragraphIndex: number) => {
@@ -148,9 +171,13 @@ export default function StoryPage() {
 
   const handleSpeak = async () => {
     if (!activeAnalysis?.sentence || isSpeaking) return;
+     if (!apiKey) {
+      toast({ title: "오류", description: "API 키를 먼저 입력해주세요.", variant: 'destructive' });
+      return;
+    }
 
     setIsSpeaking(true);
-    const result = await textToSpeechAction(activeAnalysis.sentence);
+    const result = await textToSpeechAction({ text: activeAnalysis.sentence, apiKey });
 
     if (result.success && audioRef.current) {
       audioRef.current.src = result.data.audioDataUri;
@@ -174,10 +201,14 @@ export default function StoryPage() {
       toast({ title: "오류", description: "이야기 주제를 입력해주세요.", variant: 'destructive' });
       return;
     }
+     if (!apiKey.trim()) {
+      toast({ title: "오류", description: "API 키를 입력해주세요.", variant: 'destructive' });
+      return;
+    }
     
     setIsGenerating(true);
     setParagraphAnalyses({});
-    const result = await generateNewStoryAction(topic);
+    const result = await generateNewStoryAction({ topic, apiKey });
     
     if (result.success && result.data?.paragraphs) {
       const newStory: Story = { 
@@ -212,9 +243,20 @@ export default function StoryPage() {
       <div className="flex flex-col items-center justify-center text-center h-[calc(100vh-200px)]">
         <BookOpen className="h-16 w-16 mb-4 text-muted-foreground" />
         <h1 className="text-4xl font-headline mb-4">새로운 이야기 만들기</h1>
-        <p className="text-muted-foreground mb-8 max-w-md">학습하고 싶은 이야기의 주제를 자유롭게 정해보세요.</p>
+        <p className="text-muted-foreground mb-8 max-w-md">학습하고 싶은 이야기의 주제와 API 키를 입력해주세요.</p>
         <div className="w-full max-w-sm space-y-4">
            <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="api-key">Gemini API Key</Label>
+            <Input 
+              id="api-key"
+              type="password" 
+              placeholder="API 키를 여기에 입력하세요" 
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className="text-center"
+            />
+          </div>
+          <div className="grid w-full items-center gap-1.5">
             <Label htmlFor="story-topic">이야기 주제 (영어로)</Label>
             <Input 
               id="story-topic"
@@ -226,7 +268,7 @@ export default function StoryPage() {
               className="text-center"
             />
           </div>
-          <Button onClick={handleGenerateStory} disabled={isGenerating || !topic.trim()} size="lg" variant="default" className="w-full">
+          <Button onClick={handleGenerateStory} disabled={isGenerating || !topic.trim() || !apiKey.trim()} size="lg" variant="default" className="w-full">
             {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
             {isGenerating ? '이야기 생성 중...' : '이야기 시작하기'}
           </Button>
@@ -269,7 +311,7 @@ export default function StoryPage() {
             </AlertDialogContent>
           </AlertDialog>
         </CardHeader>
-        <CardContent className="text-lg leading-relaxed space-y-4 min-h-[200px]">
+        <CardContent className="text-lg leading-relaxed space-y-4 min-h-[200px] select-text">
           
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <div className="mb-4">
@@ -294,10 +336,10 @@ export default function StoryPage() {
                     </Button>
                   </div>
                   <SheetDescription asChild>
-                    <div className="mt-2 p-3 bg-muted rounded-md text-sm">{activeAnalysis?.sentence}</div>
+                    <div className="mt-2 p-3 bg-muted rounded-md text-sm select-text">{activeAnalysis?.sentence}</div>
                   </SheetDescription>
                 </SheetHeader>
-                <div className="py-4">
+                <div className="py-4 select-text">
                   {activeAnalysis?.isLoading ? (
                     <div className="space-y-4">
                       <Skeleton className="h-8 w-1/3" />
