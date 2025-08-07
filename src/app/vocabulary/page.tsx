@@ -66,7 +66,7 @@ export default function VocabularyPage() {
           onTouchStart={() => handleTouchStart(item.term)}
           onTouchEnd={handleTouchEnd}
           onTouchMove={handleTouchEnd}
-          onContextMenu={(e) => e.preventDefault()} // Prevent context menu on long press
+          //onContextMenu={(e) => e.preventDefault()} // Prevent context menu on long press
         >
           <CardHeader>
             <div className="flex justify-between items-start gap-2">
