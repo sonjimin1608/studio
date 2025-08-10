@@ -1,39 +1,39 @@
 'use server';
 
 /**
- * @fileOverview Analyzes a sentence, identifies grammatical elements, and provides vocabulary definitions with lemmas.
+ * @fileOverview 문장을 분석하여 문법 요소와 어휘 정의(보조정리 포함)를 제공합니다.
  *
- * - analyzeSentence - Analyzes the given sentence and returns grammatical elements and vocabulary definitions.
+ * - analyzeSentence - 주어진 문장을 분석하고 문법 요소와 어휘 정의를 반환합니다.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
 const AnalyzeSentenceInputSchema = z.object({
-  sentence: z.string().describe('The sentence to analyze.'),
-  language: z.string().describe('The language of the sentence to analyze (e.g., "Spanish", "English").'),
+  sentence: z.string().describe('분석할 문장.'),
+  language: z.string().describe('분석할 문장의 언어 (예: "Spanish", "English").'),
 });
 export type AnalyzeSentenceInput = z.infer<typeof AnalyzeSentenceInputSchema>;
 
 const VocabularyItemSchema = z.object({
-  term: z.string().describe('The original vocabulary word as it appears in the sentence (e.g., "hablo", "soldados").'),
-  lemma: z.string().describe('The base form (lemma) of the word. For verbs, this is the infinitive (e.g., "hablar"). For nouns, the singular form (e.g., "soldado").'),
-  pos: z.string().describe('The part of speech (e.g., Noun, Verb, Adjective).'),
-  gender: z.enum(['m', 'f', 'n/a']).optional().describe("The grammatical gender if applicable (e.g., Spanish, German). Use 'm' for masculine, 'f' for feminine. For adjectives that don't change for gender, use 'n/a'. For other parts of speech or languages without grammatical gender, use 'n/a'."),
-  definition: z.string().describe('A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".'),
+  term: z.string().describe('문장에 나타나는 원래 어휘 단어 (예: "hablo", "soldados").'),
+  lemma: z.string().describe('단어의 기본 형태(표제어). 동사의 경우 부정사(예: "hablar"), 명사의 경우 단수형(예: "soldado").'),
+  pos: z.string().describe('품사 (예: "명사", "동사", "형용사").'),
+  gender: z.enum(['m', 'f', 'n/a']).optional().describe("문법적 성별이 적용되는 경우 (예: 스페인어, 독일어). 남성형은 'm', 여성형은 'f'를 사용합니다. 성별에 따라 변하지 않는 형용사의 경우 'n/a'를 사용합니다. 다른 품사나 문법적 성별이 없는 언어의 경우 'n/a'를 사용합니다."),
+  definition: z.string().describe('표제어에 대한 간결한 한국어 정의와 괄호 안에 영어 정의. 예: "군인 (soldier)".'),
 });
 
 export type VocabularyItem = z.infer<typeof VocabularyItemSchema>;
 
 const GrammarItemSchema = z.object({
-  topic: z.string().describe('The name of the grammatical concept (e.g., "Preterite Tense", "Ser vs. Estar").'),
-  explanation: z.string().describe('A concise explanation of the grammatical rule in Korean.'),
+  topic: z.string().describe('문법 개념의 이름 (예: "Preterite Tense", "Ser vs. Estar").'),
+  explanation: z.string().describe('문법 규칙에 대한 간결한 한국어 설명.'),
 });
 
 const AnalyzeSentenceOutputSchema = z.object({
-  translation: z.string().describe('A natural translation of the sentence into Korean, followed by the English translation in parentheses. Example: "나는 스페인어를 합니다 (I speak Spanish)".'),
-  vocabulary: z.array(VocabularyItemSchema).describe('List of all words with their definitions. Do not include proper nouns.'),
-  grammar: z.array(GrammarItemSchema).optional().describe('A list of key grammatical points found in the sentence. If no specific grammar points are noteworthy, this can be omitted.'),
+  translation: z.string().describe('문장의 자연스러운 한국어 번역과 괄호 안에 영어 번역. 예: "나는 스페인어를 합니다 (I speak Spanish)".'),
+  vocabulary: z.array(VocabularyItemSchema).describe('정의가 포함된 모든 단어 목록. 고유명사는 포함하지 않습니다.'),
+  grammar: z.array(GrammarItemSchema).optional().describe('문장에서 발견된 주요 문법 사항 목록. 특별히 주목할 만한 문법 사항이 없는 경우 생략될 수 있습니다.'),
 });
 export type AnalyzeSentenceOutput = z.infer<typeof AnalyzeSentenceOutputSchema>;
 
@@ -51,12 +51,12 @@ const prompt = ai.definePrompt({
 Language: {{{language}}}
 Sentence: {{{sentence}}}
 
-Your analysis must include three parts:
+Your analysis must be in Korean and include three parts:
 1.  **translation**: Provide a natural Korean translation, followed by the English translation in parentheses.
 2.  **vocabulary**: For each meaningful word (excluding proper nouns), provide its details:
     - **term**: The original word from the sentence.
     - **lemma**: The base (dictionary) form.
-    - **pos**: The part of speech.
+    - **pos**: The part of speech in Korean (e.g., "명사", "동사", "형용사").
     - **gender**: For nouns in languages with grammatical gender (like Spanish or German), specify 'm' (masculine) or 'f' (feminine). For adjectives that have the same form for both genders use 'n/a'. For all other parts of speech or languages without gender, use 'n/a'.
     - **definition**: A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".
 3.  **grammar**: Identify key grammatical concepts in the sentence. For each, provide:
