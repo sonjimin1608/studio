@@ -11,6 +11,7 @@ import {z} from 'zod';
 
 const AnalyzeSentenceInputSchema = z.object({
   sentence: z.string().describe('The sentence to analyze.'),
+  language: z.string().describe('The language of the sentence to analyze (e.g., "Spanish", "English").'),
 });
 export type AnalyzeSentenceInput = z.infer<typeof AnalyzeSentenceInputSchema>;
 
@@ -18,7 +19,7 @@ const VocabularyItemSchema = z.object({
   term: z.string().describe('The original vocabulary word as it appears in the sentence (e.g., "hablo", "soldados").'),
   lemma: z.string().describe('The base form (lemma) of the word. For verbs, this is the infinitive (e.g., "hablar"). For nouns, the singular form (e.g., "soldado").'),
   pos: z.string().describe('The part of speech (e.g., Noun, Verb, Adjective).'),
-  gender: z.enum(['m', 'f', 'n/a']).optional().describe("The grammatical gender. Use 'm' for masculine nouns, 'f' for feminine nouns. For adjectives that don't change for gender, use 'n/a'. For other parts of speech, use 'n/a'."),
+  gender: z.enum(['m', 'f', 'n/a']).optional().describe("The grammatical gender if applicable (e.g., Spanish, German). Use 'm' for masculine, 'f' for feminine. For adjectives that don't change for gender, use 'n/a'. For other parts of speech or languages without grammatical gender, use 'n/a'."),
   definition: z.string().describe('A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".'),
 });
 
@@ -45,8 +46,9 @@ const prompt = ai.definePrompt({
   name: 'analyzeSentencePrompt',
   input: {schema: AnalyzeSentenceInputSchema},
   output: {schema: AnalyzeSentenceOutputSchema},
-  prompt: `You are a Spanish language expert. Analyze the given Spanish sentence.
+  prompt: `You are a language expert. Analyze the given sentence in the specified language.
 
+Language: {{{language}}}
 Sentence: {{{sentence}}}
 
 Your analysis must include three parts:
@@ -55,7 +57,7 @@ Your analysis must include three parts:
     - **term**: The original word from the sentence.
     - **lemma**: The base (dictionary) form.
     - **pos**: The part of speech.
-    - **gender**: For nouns, specify 'm' (masculine) or 'f' (feminine). For adjectives that have the same form for both genders (e.g., 'interesante'), use 'n/a'. For all other parts of speech, use 'n/a'.
+    - **gender**: For nouns in languages with grammatical gender (like Spanish or German), specify 'm' (masculine) or 'f' (feminine). For adjectives that have the same form for both genders use 'n/a'. For all other parts of speech or languages without gender, use 'n/a'.
     - **definition**: A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".
 3.  **grammar**: Identify key grammatical concepts in the sentence. For each, provide:
     - **topic**: The name of the concept.

@@ -1,12 +1,12 @@
 'use server';
-import { generateSpanishStory, type GenerateSpanishStoryOutput } from '@/ai/flows/generate-spanish-story';
+import { generateStory, type GenerateStoryOutput } from '@/ai/flows/generate-story';
 import { analyzeSentence, type AnalyzeSentenceOutput } from '@/ai/flows/analyze-sentence';
 import { textToSpeech, type TextToSpeechOutput } from '@/ai/flows/text-to-speech';
 
 
 type GenerateStoryResult = {
   success: true;
-  data: GenerateSpanishStoryOutput;
+  data: GenerateStoryOutput;
 } | {
   success: false;
   error: string;
@@ -28,26 +28,28 @@ type TextToSpeechResult = {
   error: string;
 }
 
-export async function generateNewStoryAction(topic: string): Promise<GenerateStoryResult> {
+export async function generateNewStoryAction(topic: string, language: string, level: number): Promise<GenerateStoryResult> {
   try {
-    const result = await generateSpanishStory({ topic });
+    const result = await generateStory({ topic, language, level });
     if (!result.paragraphs || result.paragraphs.length === 0) {
       throw new Error('Failed to generate the story paragraphs.');
     }
     return { success: true, data: result };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating new story:', error);
-    return { success: false, error: '새로운 이야기 생성에 실패했습니다. 다시 시도해주세요.' };
+    const errorMessage = error.cause?.message || error.message || 'An unknown error occurred.';
+    return { success: false, error: `새로운 이야기 생성에 실패했습니다: ${errorMessage}` };
   }
 }
 
-export async function analyzeSentenceAction(sentence: string): Promise<AnalyzeSentenceResult> {
+export async function analyzeSentenceAction(sentence: string, language: string): Promise<AnalyzeSentenceResult> {
   try {
-    const analysis = await analyzeSentence({ sentence });
+    const analysis = await analyzeSentence({ sentence, language });
     return { success: true, data: analysis };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error analyzing sentence:', error);
-    return { success: false, error: '문장 분석에 실패했습니다. 다시 시도해주세요.' };
+    const errorMessage = error.cause?.message || error.message || 'An unknown error occurred.';
+    return { success: false, error: `문장 분석에 실패했습니다: ${errorMessage}` };
   }
 }
 
@@ -55,8 +57,9 @@ export async function textToSpeechAction(text: string): Promise<TextToSpeechResu
   try {
     const result = await textToSpeech({ text });
     return { success: true, data: result };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error converting text to speech:', error);
-    return { success: false, error: `음성 변환에 실패했습니다: ${error}` };
+    const errorMessage = error.cause?.message || error.message || 'An unknown error occurred.';
+    return { success: false, error: `음성 변환에 실패했습니다: ${errorMessage}` };
   }
 }

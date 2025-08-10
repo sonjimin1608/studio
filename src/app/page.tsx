@@ -25,11 +25,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 
 const STORY_STORAGE_KEY = 'novela-story';
 
 interface Story {
   topic: string;
+  language: string;
+  level: number;
   title: string;
   paragraphs: string[];
 }
@@ -40,6 +44,14 @@ type SentenceAnalysis = {
   isLoading: boolean;
 };
 
+const LANGUAGES = [
+  { value: 'Spanish', label: '스페인어' },
+  { value: 'English', label: '영어' },
+  { value: 'German', label: '독일어' },
+  { value: 'Chinese', label: '중국어' },
+  { value: 'Japanese', label: '일본어' },
+];
+
 export default function StoryPage() {
   const [story, setStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,6 +61,9 @@ export default function StoryPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const [topic, setTopic] = useState('');
+  const [language, setLanguage] = useState('Spanish');
+  const [level, setLevel] = useState(4);
+
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
 
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -107,7 +122,7 @@ export default function StoryPage() {
     setActiveAnalysis(analysisState);
     setIsSheetOpen(true);
 
-    const result = await analyzeSentenceAction(sentence);
+    const result = await analyzeSentenceAction(sentence, story?.language || 'Spanish');
     
     const finalAnalysis: SentenceAnalysis = { 
         ...analysisState, 
@@ -123,7 +138,7 @@ export default function StoryPage() {
 
     setActiveAnalysis(finalAnalysis);
     return finalAnalysis;
-  }, [paragraphAnalyses]);
+  }, [paragraphAnalyses, story?.language]);
 
 
   const handleSentenceClick = async (sentence: string, paragraphIndex: number) => {
@@ -177,11 +192,13 @@ export default function StoryPage() {
     
     setIsGenerating(true);
     setParagraphAnalyses({});
-    const result = await generateNewStoryAction(topic);
+    const result = await generateNewStoryAction(topic, language, level);
     
     if (result.success && result.data?.paragraphs) {
       const newStory: Story = { 
         topic: topic, 
+        language,
+        level,
         title: result.data.title,
         paragraphs: result.data.paragraphs
       };
@@ -212,8 +229,8 @@ export default function StoryPage() {
       <div className="flex flex-col items-center justify-center text-center h-[calc(100vh-200px)]">
         <BookOpen className="h-16 w-16 mb-4 text-muted-foreground" />
         <h1 className="text-4xl font-headline mb-4">새로운 이야기 만들기</h1>
-        <p className="text-muted-foreground mb-8 max-w-md">학습하고 싶은 이야기의 주제를 자유롭게 정해보세요.</p>
-        <div className="w-full max-w-sm space-y-4">
+        <p className="text-muted-foreground mb-8 max-w-md">학습하고 싶은 이야기의 주제와 언어, 난이도를 자유롭게 설정해보세요.</p>
+        <div className="w-full max-w-sm space-y-6">
            <div className="grid w-full items-center gap-1.5">
             <Label htmlFor="story-topic">이야기 주제 (영어로)</Label>
             <Input 
@@ -222,9 +239,33 @@ export default function StoryPage() {
               placeholder="예: a cat who wants to be a pirate" 
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleGenerateStory()}
               className="text-center"
             />
+          </div>
+          <div className="grid w-full items-center gap-1.5">
+            <Label>언어</Label>
+            <Select value={language} onValueChange={setLanguage}>
+              <SelectTrigger>
+                <SelectValue placeholder="언어를 선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGES.map(lang => (
+                  <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+           <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="level">어휘 수준 (1: 쉬움, 10: 어려움)</Label>
+            <Slider
+              id="level"
+              min={1}
+              max={10}
+              step={1}
+              value={[level]}
+              onValueChange={(value) => setLevel(value[0])}
+            />
+            <div className="text-center font-bold text-lg">{level}</div>
           </div>
           <Button onClick={handleGenerateStory} disabled={isGenerating || !topic.trim()} size="lg" variant="default" className="w-full">
             {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
@@ -246,7 +287,7 @@ export default function StoryPage() {
         <CardHeader className="flex flex-row justify-between items-start">
           <div>
             <CardTitle className="font-headline text-3xl mb-2">{capitalizeFirstLetter(story.title)}</CardTitle>
-            {!story.title && <CardDescription className="text-lg font-semibold text-foreground">{capitalizeFirstLetter(story.topic)}</CardDescription>}
+            <CardDescription className="text-lg font-semibold text-foreground">{capitalizeFirstLetter(story.topic)}</CardDescription>
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
