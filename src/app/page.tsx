@@ -232,11 +232,11 @@ export default function StoryPage() {
         <p className="text-muted-foreground mb-8 max-w-md">학습하고 싶은 이야기의 주제와 언어, 난이도를 자유롭게 설정해보세요.</p>
         <div className="w-full max-w-sm space-y-6">
            <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="story-topic">이야기 주제 (영어로)</Label>
+            <Label htmlFor="story-topic">이야기 주제</Label>
             <Input 
               id="story-topic"
               type="text" 
-              placeholder="예: a cat who wants to be a pirate" 
+              placeholder="예: 해적이 되고 싶은 고양이" 
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               className="text-center"
@@ -277,7 +277,7 @@ export default function StoryPage() {
   }
 
   const currentParagraph = story.paragraphs[currentParagraphIndex];
-  const sentences = currentParagraph.split(/(?<=[.?!])\s+/).filter(s => s.trim() !== '');
+  const sentences = currentParagraph.split(/(?<=[.?!。！？])\s+/).filter(s => s.trim() !== '');
   const isLastParagraph = currentParagraphIndex === story.paragraphs.length - 1;
   const progressValue = ((currentParagraphIndex + 1) / story.paragraphs.length) * 100;
 
@@ -287,7 +287,7 @@ export default function StoryPage() {
         <CardHeader className="flex flex-row justify-between items-start">
           <div>
             <CardTitle className="font-headline text-3xl mb-2">{capitalizeFirstLetter(story.title)}</CardTitle>
-            <CardDescription className="text-lg font-semibold text-foreground">{capitalizeFirstLetter(story.topic)}</CardDescription>
+            <CardDescription className="text-lg font-semibold text-foreground">{story.topic}</CardDescription>
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -313,7 +313,7 @@ export default function StoryPage() {
         <CardContent className="text-lg leading-relaxed space-y-4 min-h-[200px]">
           
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-              <div className="mb-4">
+              <div className="mb-4 select-text">
                 {sentences.map((sentence, sIndex) => (
                   <span 
                     key={sIndex}
@@ -335,10 +335,10 @@ export default function StoryPage() {
                     </Button>
                   </div>
                   <SheetDescription asChild>
-                    <div className="mt-2 p-3 bg-muted rounded-md text-sm">{activeAnalysis?.sentence}</div>
+                    <div className="mt-2 p-3 bg-muted rounded-md text-sm select-text">{activeAnalysis?.sentence}</div>
                   </SheetDescription>
                 </SheetHeader>
-                <div className="py-4">
+                <div className="py-4 select-text">
                   {activeAnalysis?.isLoading ? (
                     <div className="space-y-4">
                       <Skeleton className="h-8 w-1/3" />
@@ -363,6 +363,7 @@ export default function StoryPage() {
                               <li key={index} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
                                 <div>
                                   <p className="font-semibold">{item.term} <span className="text-muted-foreground">({item.lemma})</span></p>
+                                  {item.pinyin && <p className="text-sm text-muted-foreground">{item.pinyin}</p>}
                                   <p className="text-sm text-muted-foreground">{item.pos}{item.gender && item.gender !== 'n/a' ? ` (${item.gender})` : ''} - {item.definition}</p>
                                 </div>
                                 <Button

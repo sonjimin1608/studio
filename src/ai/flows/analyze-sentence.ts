@@ -21,6 +21,7 @@ const VocabularyItemSchema = z.object({
   pos: z.string().describe('품사 (예: "명사", "동사", "형용사").'),
   gender: z.enum(['m', 'f', 'n/a']).optional().describe("문법적 성별이 적용되는 경우 (예: 스페인어, 독일어). 남성형은 'm', 여성형은 'f'를 사용합니다. 성별에 따라 변하지 않는 형용사의 경우 'n/a'를 사용합니다. 다른 품사나 문법적 성별이 없는 언어의 경우 'n/a'를 사용합니다."),
   definition: z.string().describe('표제어에 대한 간결한 한국어 정의와 괄호 안에 영어 정의. 예: "군인 (soldier)".'),
+  pinyin: z.string().optional().describe("단어가 중국어일 경우, 성조가 포함된 병음(Pinyin) 표기. 다른 언어의 경우 생략합니다."),
 });
 
 export type VocabularyItem = z.infer<typeof VocabularyItemSchema>;
@@ -59,6 +60,7 @@ Your analysis must be in Korean and include three parts:
     - **pos**: The part of speech in Korean (e.g., "명사", "동사", "형용사").
     - **gender**: For nouns in languages with grammatical gender (like Spanish or German), specify 'm' (masculine) or 'f' (feminine). For adjectives that have the same form for both genders use 'n/a'. For all other parts of speech or languages without gender, use 'n/a'.
     - **definition**: A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".
+    - **pinyin**: If the language is Chinese, provide the Pinyin with tone marks for the term. For all other languages, omit this field.
 3.  **grammar**: Identify key grammatical concepts in the sentence. For each, provide:
     - **topic**: The name of the concept.
     - **explanation**: A concise explanation in Korean. If there are no noteworthy grammatical points, you can provide an empty array.

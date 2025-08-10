@@ -10,7 +10,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
 const GenerateStoryInputSchema = z.object({
-  topic: z.string().describe('The overall topic or theme of the story.'),
+  topic: z.string().describe('The overall topic or theme of the story. Can be in Korean or English.'),
   language: z.string().describe('The language the story should be written in (e.g., "Spanish", "English").'),
   level: z.number().min(1).max(10).describe('The vocabulary difficulty level, from 1 (easiest) to 10 (hardest).'),
 });
@@ -35,7 +35,7 @@ const storyPrompt = ai.definePrompt({
   output: {schema: GenerateStoryOutputSchema},
   prompt: `You are a creative writer who specializes in writing short stories for language learners.
 
-Your task is to write a complete short story based on the given topic, language, and difficulty level.
+Your task is to write a complete short story based on the given topic, language, and difficulty level. The user may provide the topic in Korean, but you must write the story in the specified target language.
 
 Language: {{language}}
 Vocabulary Level: {{level}} (1=beginner, 10=advanced)
@@ -43,7 +43,7 @@ The overall topic of the story is: {{topic}}
 
 **Instructions:**
 1.  **Title**: Generate a creative, short, and fitting title for the story in the specified language.
-2.  **Story**: Write a complete story consisting of approximately 15-20 paragraphs. Each paragraph must be between 4 and 6 sentences long.
+2.  **Story**: Write a complete story consisting of approximately 15-20 paragraphs. Each paragraph must be at least 5 sentences long.
     - **Targeted Level**: The vocabulary and grammatical structures must be appropriate for the specified level.
     - **Consistent Point of View**: The story must be written in a consistent third-person point of view. Do not switch to first-person ("I", "we").
     - **Dialogue**: Enclose all character dialogue in double quotation marks (e.g., "Hola, ¿cómo estás?").
