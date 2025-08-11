@@ -67,6 +67,7 @@ export default function StoryPage() {
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
 
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speakingWord, setSpeakingWord] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   const { toast } = useToast();
@@ -93,7 +94,10 @@ export default function StoryPage() {
     // Setup audio element
     if (!audioRef.current) {
         audioRef.current = new Audio();
-        audioRef.current.onended = () => setIsSpeaking(false);
+        audioRef.current.onended = () => {
+          setIsSpeaking(false);
+          setSpeakingWord(null);
+        }
     }
   }, []);
 
@@ -161,21 +165,28 @@ export default function StoryPage() {
     }
   }
 
-  const handleSpeak = async () => {
-    if (!activeAnalysis?.sentence || isSpeaking) return;
+  const handleSpeak = async (text: string, isWord: boolean = false) => {
+    if (isSpeaking || speakingWord) return;
 
-    setIsSpeaking(true);
-    const result = await textToSpeechAction(activeAnalysis.sentence);
+    if(isWord) {
+      setSpeakingWord(text);
+    } else {
+      setIsSpeaking(true);
+    }
+
+    const result = await textToSpeechAction(text);
 
     if (result.success && audioRef.current) {
       audioRef.current.src = result.data.audioDataUri;
       audioRef.current.play().catch(e => {
         console.error("오디오 재생에 실패했습니다.", e);
         setIsSpeaking(false);
+        setSpeakingWord(null);
       });
     } else {
       toast({ title: "오류", description: result.error, variant: 'destructive' });
       setIsSpeaking(false);
+      setSpeakingWord(null);
     }
   }
 
@@ -330,7 +341,7 @@ export default function StoryPage() {
                 <SheetHeader>
                    <div className="flex items-center gap-2">
                     <SheetTitle className="font-headline">문장 분석</SheetTitle>
-                    <Button variant="ghost" size="icon" onClick={handleSpeak} disabled={isSpeaking}>
+                    <Button variant="ghost" size="icon" onClick={() => activeAnalysis?.sentence && handleSpeak(activeAnalysis.sentence)} disabled={isSpeaking || !!speakingWord}>
                       {isSpeaking ? <Loader2 className="h-5 w-5 animate-spin" /> : <Volume2 className="h-5 w-5" />}
                     </Button>
                   </div>
@@ -361,10 +372,21 @@ export default function StoryPage() {
                             const saved = isWordSaved(item.term);
                              return (
                               <li key={index} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
-                                <div>
-                                  <p className="font-semibold">{item.term} <span className="text-muted-foreground">({item.lemma})</span></p>
-                                  {item.pinyin && <p className="text-sm text-muted-foreground">{item.pinyin}</p>}
-                                  <p className="text-sm text-muted-foreground">{item.pos}{item.gender && item.gender !== 'n/a' ? ` (${item.gender})` : ''} - {item.definition}</p>
+                                <div className="flex items-center gap-2 flex-grow">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-7 w-7 flex-shrink-0"
+                                    onClick={() => handleSpeak(item.term, true)}
+                                    disabled={isSpeaking || !!speakingWord}
+                                  >
+                                    {speakingWord === item.term ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
+                                  </Button>
+                                  <div className="flex-grow">
+                                    <p className="font-semibold">{item.term} <span className="text-muted-foreground">({item.lemma})</span></p>
+                                    {item.pinyin && <p className="text-sm text-muted-foreground">{item.pinyin}</p>}
+                                    <p className="text-sm text-muted-foreground">{item.pos}{item.gender && item.gender !== 'n/a' ? ` (${item.gender})` : ''} - {item.definition}</p>
+                                  </div>
                                 </div>
                                 <Button
                                   size="icon"
