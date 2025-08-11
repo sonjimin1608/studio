@@ -6,7 +6,7 @@ import { useWordBank, type WordBankItem } from '@/context/WordBankContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Bookmark } from 'lucide-react';
+import { Trash2, Bookmark, Volume2, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from '@/lib/utils';
 import {
@@ -20,11 +20,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { textToSpeechAction } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
+
 
 export default function VocabularyPage() {
   const { wordBank, removeWord, clearWordBank } = useWordBank();
   const [activeCardTerm, setActiveCardTerm] = useState<string | null>(null);
   const touchTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const [speakingTerm, setSpeakingTerm] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { toast } = useToast();
 
   const vocabulary = wordBank.filter(item => item.type === 'vocabulary');
   const grammar = wordBank.filter(item => item.type === 'grammar');
@@ -44,6 +51,30 @@ export default function VocabularyPage() {
   const handleMouseLeave = () => {
     setActiveCardTerm(null);
   }
+
+  const handleSpeak = async (term: string) => {
+    if (speakingTerm) return;
+
+    setSpeakingTerm(term);
+
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.onended = () => setSpeakingTerm(null);
+    }
+    
+    const result = await textToSpeechAction(term);
+
+    if (result.success && audioRef.current) {
+      audioRef.current.src = result.data.audioDataUri;
+      audioRef.current.play().catch(e => {
+        console.error("오디오 재생에 실패했습니다.", e);
+        setSpeakingTerm(null);
+      });
+    } else {
+      toast({ title: "오류", description: result.error, variant: 'destructive' });
+      setSpeakingTerm(null);
+    }
+  };
 
   if (wordBank.length === 0) {
     return (
@@ -70,11 +101,22 @@ export default function VocabularyPage() {
         >
           <CardHeader>
             <div className="flex justify-between items-start gap-2">
-              <div>
-                <CardTitle className="text-xl">{item.term}</CardTitle>
-                <Badge variant={item.type === 'grammar' ? 'secondary' : 'outline'} className="mt-2">
-                  {item.type === 'grammar' ? '문법' : '어휘'}
-                </Badge>
+               <div className="flex items-center gap-2">
+                 <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 flex-shrink-0"
+                    onClick={() => handleSpeak(item.term)}
+                    disabled={!!speakingTerm}
+                  >
+                    {speakingTerm === item.term ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
+                  </Button>
+                <div>
+                  <CardTitle className="text-xl">{item.term}</CardTitle>
+                  <Badge variant={item.type === 'grammar' ? 'secondary' : 'outline'} className="mt-2">
+                    {item.type === 'grammar' ? '문법' : '어휘'}
+                  </Badge>
+                </div>
               </div>
             </div>
           </CardHeader>
