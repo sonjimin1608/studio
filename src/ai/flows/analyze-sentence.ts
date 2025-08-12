@@ -59,7 +59,7 @@ Your analysis must be in Korean and include three parts:
     - **lemma**: The base (dictionary) form.
     - **pos**: The part of speech in Korean (e.g., "명사", "동사", "형용사").
     - **gender**: For nouns in languages with grammatical gender (like Spanish or German), specify 'm' (masculine) or 'f' (feminine). For adjectives that have the same form for both genders use 'n/a'. For all other parts of speech or languages without gender, use 'n/a'.
-    - **definition**: A concise definition of the lemma in Korean, followed by the English definition in parentheses. Example: "군인 (soldier)".
+    - **definition**: A concise, dictionary-style definition of the lemma in Korean, followed by the English translation in parentheses. It should be a direct translation, not a long explanation. Example: "군인 (soldier)". For "casa", it should be "집 (house)", not a long sentence.
     - **pinyin**: If the language is Chinese, provide the Pinyin with tone marks for the term. For all other languages, omit this field.
 3.  **grammar**: Identify key grammatical concepts in the sentence. For each, provide:
     - **topic**: The name of the concept.
