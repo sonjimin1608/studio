@@ -44,6 +44,7 @@ The overall topic of the story is: {{topic}}
 **Instructions:**
 1.  **Title**: Generate a creative, short, and fitting title for the story in the specified language.
 2.  **Story**: Write a complete story consisting of approximately 15-20 paragraphs. Each paragraph must be at least 5 sentences long.
+    - **Creative Opening**: Always begin the story with a creative, original sentence. Avoid clichés and formulaic openings (e.g., "Once upon a time...").
     - **Targeted Level**: The vocabulary and grammatical structures must be appropriate for the specified level.
     - **Consistent Point of View**: The story must be written in a consistent third-person point of view. Do not switch to first-person ("I", "we").
     - **Dialogue**: Enclose all character dialogue in double quotation marks (e.g., "Hola, ¿cómo estás?").
