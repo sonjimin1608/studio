@@ -20,7 +20,7 @@ const GenerateStoryOutputSchema = z.object({
   title: z
     .string()
     .describe('A creative and fitting title for the story in the specified language.'),
-  paragraphs: z.array(z.string()).describe('An array of paragraphs for the story. The story should be approximately 15-20 paragraphs long.'),
+  paragraphs: z.array(z.string()).describe('An array of paragraphs for the story. The story should be approximately 15-20 paragraphs long, and each paragraph must contain at least 5 sentences.'),
 });
 export type GenerateStoryOutput = z.infer<typeof GenerateStoryOutputSchema>;
 
@@ -43,8 +43,8 @@ The overall topic of the story is: {{topic}}
 
 **Instructions:**
 1.  **Title**: Generate a creative, short, and fitting title for the story in the specified language.
-2.  **Story**: Write a complete story consisting of approximately 15-20 paragraphs. Each paragraph must be at least 5 sentences long.
-    - **Creative Opening**: Always begin the story with a creative, original sentence. Avoid clichés and formulaic openings (e.g., "Once upon a time...").
+2.  **Story**: Write a complete story consisting of approximately 15-20 paragraphs. **Each paragraph, including the very first one, must be at least 5 sentences long.**
+    - **Creative Opening**: Always begin the story with a creative, original sentence. Avoid clichés and formulaic openings (e.g., "Once upon a time..."). The opening paragraph must set the scene and be substantial.
     - **Targeted Level**: The vocabulary and grammatical structures must be appropriate for the specified level.
     - **Consistent Point of View**: The story must be written in a consistent third-person point of view. Do not switch to first-person ("I", "we").
     - **Dialogue**: Enclose all character dialogue in double quotation marks (e.g., "Hola, ¿cómo estás?").
