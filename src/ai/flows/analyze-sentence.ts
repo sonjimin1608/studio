@@ -20,7 +20,7 @@ const VocabularyItemSchema = z.object({
   lemma: z.string().describe('단어의 기본 형태(표제어). 동사의 경우 부정사(예: "hablar"), 명사의 경우 단수형(예: "soldado").'),
   pos: z.string().describe('품사 (예: "명사", "동사", "형용사").'),
   gender: z.enum(['m', 'f', 'n/a']).optional().describe("문법적 성별이 적용되는 경우 (예: 스페인어, 독일어). 남성형은 'm', 여성형은 'f'를 사용합니다. 성별에 따라 변하지 않는 형용사의 경우 'n/a'를 사용합니다. 다른 품사나 문법적 성별이 없는 언어의 경우 'n/a'를 사용합니다."),
-  definition: z.string().describe('표제어에 대한 간결한 한국어 정의와 괄호 안에 영어 정의. 예: "군인 (soldier)".'),
+  definition: z.string().describe('표제어에 대한 간결한 한국어 정의와 괄호 안에 영어 정의. 반드시 긴 설명이 아닌 직접적인 번역이어야 합니다. 예: "군인 (soldier)". "casa"의 경우 "집 (house)"이어야 합니다.'),
   pinyin: z.string().optional().describe("단어가 중국어일 경우, 성조가 포함된 병음(Pinyin) 표기. 다른 언어의 경우 생략합니다."),
 });
 
@@ -59,7 +59,7 @@ Your analysis must be in Korean and include three parts:
     - **lemma**: The base (dictionary) form.
     - **pos**: The part of speech in Korean (e.g., "명사", "동사", "형용사").
     - **gender**: For nouns in languages with grammatical gender (like Spanish or German), specify 'm' (masculine) or 'f' (feminine). For adjectives that have the same form for both genders use 'n/a'. For all other parts of speech or languages without gender, use 'n/a'.
-    - **definition**: A concise, dictionary-style definition of the lemma in Korean, followed by the English translation in parentheses. It should be a direct translation, not a long explanation. Example: "군인 (soldier)". For "casa", it should be "집 (house)", not a long sentence.
+    - **definition**: A concise, dictionary-style definition of the lemma in Korean, followed by the English translation in parentheses. **It must be a direct translation, not a long explanation.** For example, for 'casa', the output must be '집 (house)', not a long sentence. For 'apple', it must be '사과 (apple)'.
     - **pinyin**: If the language is Chinese, provide the Pinyin with tone marks for the term. For all other languages, omit this field.
 3.  **grammar**: Identify key grammatical concepts in the sentence. For each, provide:
     - **topic**: The name of the concept.
